@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ScalaSbtSettings">
+    <option name="linkedExternalProjectsSettings">
+      <SbtProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/Interaction" />
+            <option value="$PROJECT_DIR$/Interaction/project" />
+            <option value="$PROJECT_DIR$/Main" />
+            <option value="$PROJECT_DIR$/Main/project" />
+            <option value="$PROJECT_DIR$/Persistence" />
+            <option value="$PROJECT_DIR$/Persistence/project" />
+            <option value="$PROJECT_DIR$/project" />
+          </set>
+        </option>
+        <option name="sbtVersion" value="0.13.15" />
+        <option name="useAutoImport" value="true" />
+        <option name="useOurOwnAutoImport" value="true" />
+      </SbtProjectSettings>
+      <SbtProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$/Interaction" />
+        <option name="jdk" value="1.8" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/Interaction" />
+            <option value="$PROJECT_DIR$/Interaction/project" />
+          </set>
+        </option>
+        <option name="sbtVersion" value="0.13.15" />
+      </SbtProjectSettings>
+      <SbtProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$/Main" />
+        <option name="jdk" value="1.8" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/Main" />
+            <option value="$PROJECT_DIR$/Main/project" />
+          </set>
+        </option>
+        <option name="sbtVersion" value="0.13.15" />
+      </SbtProjectSettings>
+      <SbtProjectSettings>
+        <option name="externalProjectPath" value="$PROJECT_DIR$/Persistence" />
+        <option name="jdk" value="1.8" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$/Persistence" />
+            <option value="$PROJECT_DIR$/Persistence/project" />
+          </set>
+        </option>
+        <option name="sbtVersion" value="0.13.15" />
+      </SbtProjectSettings>
+    </option>
+  </component>
+</project>

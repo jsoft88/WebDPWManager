@@ -1,0 +1,36 @@
+<div class="row">
+  <div class="panel panel-primary">
+    <div class="panel-heading">Master Details - Running on this agent</div>
+    <div class="panel-body">
+      <p>Here you can find de details of the current Master being executed by this agent. If you wish to modify any of
+      its field, click on the edit button below. However, keep in mind that altering the params of execution, will only
+      become effective after relaunching the whole master cluster.</p>
+    </div>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Field ID</th>
+          <th>Field</th>
+          <th>Current Value</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody *ngFor="let field of executionDetails" *ngIf="executionDetailsRetrieveError === ''">
+        <tr *ngIf="field.fieldEnabled">
+          <td>{{field.field.fieldId}}</td>
+          <td *ngIf="fieldRetrieveError === ''">{{field.field.fieldName}}</td>
+          <td *ngIf="fieldRetrieveError">{{fieldRetrieveError}}</td>
+          <td>{{field.value}}</td>
+          <td *ngIf="fieldRetrieveError === ''">{{field.field.fieldDescription}}</td>
+          <td *ngIf="fieldRetrieveError">{{fieldRetrieveError}}</td>
+        </tr>
+      </tbody>
+      <tbody *ngIf="executionDetailsRetrieveError">
+        <tr>
+          <td colspan="4">{{executionDetailsRetrieveError}}</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="panel-footer"><button class="btn btn-warning">Edit Execution</button></div>
+  </div>
+</div>

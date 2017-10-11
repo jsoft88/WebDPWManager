@@ -1,0 +1,98 @@
+<div class="row">
+  <form>
+    <div class="form-group">
+      <label for="hostIp">Host IP</label>
+      <input type="text" class="form-control" id="hostIp" placeholder="Enter ip address">
+    </div>
+    <div class="form-group">
+      <label for="hostPort">Host Port</label>
+      <input type="text" class="form-control" id="hostPort" placeholder="Enter port for akka actor">
+    </div>
+    <div class="form-group">
+      <label for="hostName">Host Name</label>
+      <input type="text" class="form-control" id="hostName" placeholder="Enter a name for this host">
+    </div>
+    <div class="form-group">
+      <div class="btn-group btn-group-justified" *ngFor="let role of availableRoles | async">
+        <div class="btn-group" role="group">
+          <button type="button" class="btn btn-default">{{role.roleLabel}}</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <button type="button" class="btn btn-primary">Add New Host</button>
+    </div>
+  </form>
+</div>
+<div class="row">
+  <div class="col-sm-2"></div>
+  <div class="col-sm-8"><hr></div>
+  <div class="col-sm-2"></div>
+</div>
+<div class="modal fade master-details-modal" tabindex="-1" role="dialog" aria-labelledby="masterDetailsModal" id="masterDetailsModal">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">What would you like to do?</h4>
+      </div>
+      <div class="modal-body">
+        <p>Please choose the operation you would like to perform.</p>
+      </div>
+      <div class="modal-footer">
+        <a href="{{apiEndpoint}}/masters/details" class="btn btn-primary" data-dismiss="modal">View Master Details</a>
+        <a href="{{apiEndpoint}}/execs/agentId/masterId" type="button" class="btn btn-success" data-dismiss="modal">View Master's execution</a>
+        <button type="button" class="btn btn-info" data-dismiss="modal">Nothing</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade add-master-modal" tabindex="-1" role="dialog" aria-labelledby="addMasterModal" id="addMasterModal">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4>Add New Master</h4>
+      </div>
+      <div class="modal-body">
+        <p>This will take you to the next step where you will add master details. Keep in mind that adding a new master without restarting the masters cluster, is currently unsupported.
+          DPWManager will stop all masters but this isn't the recommended approach since pipeline will be stopped abruptly. Instead, stop masters one by one, selecting the order
+        that works best for your current pipeline.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-dismiss="modal">Add New Master</button>
+        <button type="button" class="btn btn-info" data-dismiss="modal">No Thanks</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-sm-12" *ngFor="let host of hosts | async">
+    <div class="thumbnail">
+      <img src="" alt="Host {{host.name}}">
+      <div class="caption">
+        <h3>Host is {{host.address}}</h3>
+        <p>An akka actor is listening at port {{host.port}}</p>
+        <p *ngFor="let master of host.masters; let i = index">Masters:
+          <span *ngIf="i%3 == 0" class="label label-primary" data-target=".master-details-modal">{{master.masterLabel}}</span>
+          <span data-target=".master-details-modal" *ngIf="i%3 == 1" class="label label-success" data-target=".master-details-modal">{{master.masterLabel}}</span>
+          <span *ngIf="i%3 == 2" class="label label-info" data-target=".master-details-modal">{{master.masterLabel}}</span>
+        </p>
+        <p *ngIf="host.role">Current role in host is: {{role.roleLabel}}</p>
+        <p *ngIf="!host.role">Current role in host is: Host does not have a role assigned.</p>
+        <p><a href="#" class="btn btn-primary" data-target=".add-master-modal">Assign New Master</a>  </p>
+        <div class="dropdown">
+          <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" id="hostOptionsDropdown">Options <span class="caret"></span></button>
+          <ul>
+            <li><a href="#">Assign New Master</a></li>
+            <li><a href="#">Assign/Switch Role</a></li>
+            <li *ngIf="host.role"><a href="#">Remove Role</a></li>
+          </ul>
+        </div>
+        <a href="#" class="btn btn-danger">Kill Masters</a>
+      </div>
+    </div>
+  </div>
+</div>

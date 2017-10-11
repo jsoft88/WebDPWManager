@@ -1,0 +1,30 @@
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Execution ID</th>
+      <th>Master Type</th>
+      <th>Command</th>
+      <th>Agent ID</th>
+      <th>Host</th>
+      <th>Status</th>
+      <th>Timestamp</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr *ngFor="let agentExecution of agentExecutions" *ngIf="errorMessage === ''">
+      <td><a [routerLink]="['/execs/details', agentExecution.agentExecId]">{{agentExecution.agentExecId}}</a></td>
+      <td>{{agentExecution.masterType.masterLabel}}</td>
+      <td>{{agentExecution.command}}</td>
+      <td>{{agentExecution.agentId}}</td>
+      <td *ngIf="agentExecution.cleanStop === false">Stopped</td>
+      <td *ngIf="agentExecution.cleanStop === true">Running</td>
+      <td><button class="btn btn-success">View Details</button></td>
+    </tr>
+    <tr *ngIf="errorMessage">
+      <td colspan="7">
+        {{errorMessage}}
+      </td>
+    </tr>
+  </tbody>
+</table>

@@ -1,0 +1,15 @@
+package org.jc.dpwmanager.repository
+
+import org.jc.dpwmanager.models.{AgentExecution, AgentExecutionDetails}
+
+import scala.concurrent.Future
+
+/**
+  * Created by jorge on 11/7/2017.
+  */
+trait AgentExecutionRepository extends BaseRepository[Int, AgentExecution]{
+
+  def getUnstoppedMasterForAgent(agentId: Short): Future[Seq[AgentExecution]]
+
+  def getAllMastersForAgent(agentId: Short): Future[Seq[AgentExecution]]
+}

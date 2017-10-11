@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ScalaCompilerConfiguration">
+    <profile name="SBT 1" modules="webdpwmanager">
+      <option name="deprecationWarnings" value="true" />
+      <option name="uncheckedWarnings" value="true" />
+      <parameters>
+        <parameter value="-encoding" />
+        <parameter value="utf8" />
+      </parameters>
+    </profile>
+    <profile name="SBT 2" modules="WebDPWManager-interaction,Main-interaction,Main-main,default-4e6277,Persistence-interaction,Persistence-persistence,default-8c275f,Main-interaction~1,main,interaction,interaction,WebDPWManager-main,persistence" />
+  </component>
+</project>
