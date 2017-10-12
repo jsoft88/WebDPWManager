@@ -80,8 +80,8 @@
           <span data-target=".master-details-modal" *ngIf="i%3 == 1" class="label label-success" data-target=".master-details-modal">{{master.masterLabel}}</span>
           <span *ngIf="i%3 == 2" class="label label-info" data-target=".master-details-modal">{{master.masterLabel}}</span>
         </p>
-        <p *ngIf="host.role">Current role in host is: {{role.roleLabel}}</p>
-        <p *ngIf="!host.role">Current role in host is: Host does not have a role assigned.</p>
+        <p *ngIf="host.role !== ''">Current role in host is: {{role.roleLabel}}</p>
+        <p *ngIf="host.role === ''">Current role in host is: Host does not have a role assigned.</p>
         <p><a href="#" class="btn btn-primary" data-target=".add-master-modal">Assign New Master</a>  </p>
         <div class="dropdown">
           <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" id="hostOptionsDropdown">Options <span class="caret"></span></button>

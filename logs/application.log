@@ -1,0 +1,43 @@
+2017-09-19 14:22:11,989 [INFO] from application in play-dev-mode-akka.actor.default-dispatcher-3 - ApplicationTimer demo: Starting application at 2017-09-19T18:22:11.965Z.
+2017-09-19 14:22:13,371 [INFO] from play.api.http.EnabledFilters in play-dev-mode-akka.actor.default-dispatcher-3 - Enabled Filters (see <https://www.playframework.com/documentation/latest/Filters>):
+
+    play.filters.csrf.CSRFFilter
+    play.filters.headers.SecurityHeadersFilter
+    play.filters.hosts.AllowedHostsFilter
+    filters.ExampleFilter
+    filters.ExampleFilter
+
+2017-09-19 14:22:13,396 [INFO] from play.api.Play in play-dev-mode-akka.actor.default-dispatcher-3 - Application started (Dev)
+2017-09-19 14:23:55,556 [WARN] from com.zaxxer.hikari.HikariConfig in play-dev-mode-akka.actor.default-dispatcher-10 - The initializationFailFast propery is deprecated, see initializationFailTimeout
+2017-09-19 14:24:07,238 [ERROR] from akka.dispatch.Dispatcher in DPWCluster-akka.actor.default-dispatcher-8 - Schema creation failed
+java.lang.Exception: Schema creation failed
+	at org.jc.dpwmanager.impl.DefaultAgentExecutionRepositoryImpl.$anonfun$new$1(DefaultAgentExecutionRepositoryImpl.scala:23)
+	at org.jc.dpwmanager.impl.DefaultAgentExecutionRepositoryImpl.$anonfun$new$1$adapted(DefaultAgentExecutionRepositoryImpl.scala:21)
+	at scala.concurrent.impl.CallbackRunnable.run(Promise.scala:60)
+	at akka.dispatch.BatchingExecutor$AbstractBatch.processBatch(BatchingExecutor.scala:55)
+	at akka.dispatch.BatchingExecutor$BlockableBatch.$anonfun$run$1(BatchingExecutor.scala:91)
+	at scala.runtime.java8.JFunction0$mcV$sp.apply(JFunction0$mcV$sp.java:12)
+	at scala.concurrent.BlockContext$.withBlockContext(BlockContext.scala:81)
+	at akka.dispatch.BatchingExecutor$BlockableBatch.run(BatchingExecutor.scala:91)
+	at akka.dispatch.TaskInvocation.run(AbstractDispatcher.scala:40)
+	at akka.dispatch.ForkJoinExecutorConfigurator$AkkaForkJoinTask.exec(ForkJoinExecutorConfigurator.scala:43)
+	at akka.dispatch.forkjoin.ForkJoinTask.doExec(ForkJoinTask.java:260)
+	at akka.dispatch.forkjoin.ForkJoinPool$WorkQueue.runTask(ForkJoinPool.java:1339)
+	at akka.dispatch.forkjoin.ForkJoinPool.runWorker(ForkJoinPool.java:1979)
+	at akka.dispatch.forkjoin.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:107)
+Caused by: java.sql.SQLTransientConnectionException: database - Connection is not available, request timed out after 1070ms.
+	at com.zaxxer.hikari.pool.HikariPool.createTimeoutException(HikariPool.java:601)
+	at com.zaxxer.hikari.pool.HikariPool.getConnection(HikariPool.java:194)
+	at com.zaxxer.hikari.pool.HikariPool.getConnection(HikariPool.java:144)
+	at com.zaxxer.hikari.HikariDataSource.getConnection(HikariDataSource.java:85)
+	at slick.jdbc.hikaricp.HikariCPJdbcDataSource.createConnection(HikariCPJdbcDataSource.scala:18)
+	at slick.jdbc.JdbcBackend$BaseSession.<init>(JdbcBackend.scala:439)
+	at slick.jdbc.JdbcBackend$DatabaseDef.createSession(JdbcBackend.scala:47)
+	at slick.jdbc.JdbcBackend$DatabaseDef.createSession(JdbcBackend.scala:38)
+	at slick.basic.BasicBackend$DatabaseDef.acquireSession(BasicBackend.scala:218)
+	at slick.basic.BasicBackend$DatabaseDef.acquireSession$(BasicBackend.scala:217)
+	at slick.jdbc.JdbcBackend$DatabaseDef.acquireSession(JdbcBackend.scala:38)
+	at slick.basic.BasicBackend$DatabaseDef$$anon$2.run(BasicBackend.scala:239)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1142)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:617)
+	at java.lang.Thread.run(Thread.java:745)

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/Persistence/.idea/modules/Persistence-interaction.iml" filepath="$PROJECT_DIR$/Persistence/.idea/modules/Persistence-interaction.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Persistence/.idea/modules/Persistence-persistence.iml" filepath="$PROJECT_DIR$/Persistence/.idea/modules/Persistence-persistence.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Persistence/.idea/modules/Persistence-persistence-build.iml" filepath="$PROJECT_DIR$/Persistence/.idea/modules/Persistence-persistence-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/UI/UI.iml" filepath="$PROJECT_DIR$/UI/UI.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Main/.idea/modules/WebDPWManager-main.iml" filepath="$PROJECT_DIR$/Main/.idea/modules/WebDPWManager-main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Interaction/.idea/modules/interaction.iml" filepath="$PROJECT_DIR$/Interaction/.idea/modules/interaction.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Interaction/.idea/modules/interaction-build.iml" filepath="$PROJECT_DIR$/Interaction/.idea/modules/interaction-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Main/.idea/modules/main-build.iml" filepath="$PROJECT_DIR$/Main/.idea/modules/main-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/persistence.iml" filepath="$PROJECT_DIR$/.idea/modules/persistence.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/persistence-build.iml" filepath="$PROJECT_DIR$/.idea/modules/persistence-build.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/webdpwmanager.iml" filepath="$PROJECT_DIR$/.idea/modules/webdpwmanager.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/webdpwmanager-build.iml" filepath="$PROJECT_DIR$/.idea/modules/webdpwmanager-build.iml" />
+    </modules>
+  </component>
+</project>
