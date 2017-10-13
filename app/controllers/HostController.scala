@@ -8,9 +8,10 @@ import utils.ReachPersistenceAgentWith
 import akka.pattern.ask
 import akka.util.Timeout
 import org.jc.dpwmanager.commands._
-import org.jc.dpwmanager.impl.{DefaultAgentRepositoryImpl, DefaultDpwRolesRepositoryImpl}
-import org.jc.dpwmanager.models.{Agent, DpwRoles}
-import play.api.libs.json.{JsValue, Json, Writes}
+import org.jc.dpwmanager.impl.{DefaultAgentRepositoryImpl, DefaultDeploymentByRoleRepositoryImpl, DefaultDpwRolesRepositoryImpl, DefaultHostRepositoryImpl}
+import org.jc.dpwmanager.models.{Agent, DeploymentByRole, DpwRoles, Host}
+import play.api.libs.json.{JsPath, JsValue, Json, Writes}
+import play.api.libs.functional.syntax._
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
@@ -20,13 +21,27 @@ class HostController @Inject()(cc: ControllerComponents)(implicit ec: ExecutionC
 
   implicit val timeout = Timeout(15 seconds)
 
-  implicit val dpwRolesWrites = new Writes[DpwRoles] {
-    override def writes(o: DpwRoles): JsValue = Json.obj(
-      "roleId" -> o.roleId,
-      "roleLabel" -> o.roleLabel,
-      "roleDescription" -> o.roleDescription
-    )
-  }
+  implicit val dpwRolesWrites: Writes[DpwRolesUIModel] = (
+    (JsPath \ "roleId").write[String] and
+      (JsPath \ "roleLabel").write[String] and
+      (JsPath \ "roleDescription").write[String]
+  )(unlift(DpwRolesUIModel.unapply))
+
+  implicit val deploymentByRoleWrites: Writes[DeploymentByRoleUIModel] = (
+    (JsPath \ "deployId").write[Int] and
+      (JsPath \ "actorName").write[String] and
+      (JsPath \ "actorSystemName").write[String] and
+      (JsPath \ "port").write[Short] and
+      (JsPath \ "role").write[DpwRolesUIModel] and
+      (JsPath \ "componentId").write[Short]
+  )(unlift(DeploymentByRoleUIModel.unapply))
+
+  implicit val hostWrites: Writes[HostUIModel] = (
+    (JsPath \ "hostId").write[Short] and
+      (JsPath \ "address").write[String] and
+      (JsPath \ "deployments").write[Seq[DeploymentByRoleUIModel]] and
+      (JsPath \ "executions").write[Seq[AgentExecutionUIModel]]
+  )(unlift(HostUIModel.unapply))
 
   def getAllRoles = Action.async { implicit request =>
     val dpwRole = DpwRoles(roleId = "none", roleLabel = "", roleDescription = "")
@@ -53,10 +68,38 @@ class HostController @Inject()(cc: ControllerComponents)(implicit ec: ExecutionC
       case None => Future.successful(InternalServerError("No business actor available to fulfill this request"))
     }
   }
+
+  private def noBusinessActor = "No business actor available to fulfill this request"
+
+  def getAllHosts() = Action.async { implicit request =>
+    val dummyHost = Host(hostId = 0, address = "")
+
+    InitialConfiguration.businessActor match {
+      case Some(ar) => (ar ? ReachPersistenceAgentWith(CommandWrapper(HostListRetrieveCommand(new DefaultHostRepositoryImpl(), dummyHost)))).mapTo[HostListRetrieveResponse]
+        .map(s => Ok(Json.toJson(s.response.map(h => HostUIModel(hostId = h.hostId, address = h.address, deployments = IndexedSeq.empty, executions = IndexedSeq.empty))))) recover {
+        case ex => InternalServerError(ex.getMessage)
+      }
+      case None => Future.successful(InternalServerError(noBusinessActor))
+    }
+  }
+
+  def getDeploymentsForHost(hostId: Short) = Action.async { implicit request =>
+    val dummyDeploymentByRole = DeploymentByRole(deployId = 0, hostId = hostId, actorName = "", actorSystemName = "", componentId = 0, port = 0, roleId = "")
+
+    InitialConfiguration.businessActor match {
+      case Some(ar) => (ar ? ReachPersistenceAgentWith(CommandWrapper(DeploymentsForHostListCommand(new DefaultDeploymentByRoleRepositoryImpl(), dummyDeploymentByRole)))).mapTo[DeploymentsForHostListResponse]
+        .map(s => Ok(Json.toJson(s.response.map(dp => DeploymentByRoleUIModel(deployId = dp.deployId, actorName = dp.actorName, actorSystemName = dp.actorSystemName, port = dp.port, componentId = dp.componentId, role = DpwRolesUIModel(roleId = dp.roleId, roleLabel = "", roleDescription = "")))))) recover {
+        case ex => InternalServerError(ex.getMessage)
+      }
+      case None => Future.successful(InternalServerError(noBusinessActor))
+    }
+  }
 }
 
-case class HostUIModel(hostId: String, address: String, port: Int, name: String, agentId: Short, masters: Seq[MasterTypeUIModel], role: DpwRolesUIModel)
+case class HostUIModel(hostId: Short, address: String, deployments: Seq[DeploymentByRoleUIModel], executions: Seq[AgentExecutionUIModel])
 
 case class MasterFieldUIModel(fieldId: Int, fieldName: String, fieldDescription: String)
 
 case class DpwRolesUIModel(roleId: String, roleLabel: String, roleDescription: String)
+
+case class DeploymentByRoleUIModel(deployId: Int, actorName: String, actorSystemName: String, port: Short, role: DpwRolesUIModel, componentId: Short)
