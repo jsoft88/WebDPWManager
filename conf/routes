@@ -16,6 +16,12 @@ GET     /api/hosts/roles            controllers.HostController.getAllRoles
 
 GET     /api/hosts/role/:agentId    controllers.HostController.getAgentRole(agentId: Int)
 
+GET     /api/hosts/roles/:hostId    controllers.HostController.getDeploymentsForHost(hostId: Short)
+
+GET     /api/hosts/all              controllers.HostController.getAllHosts()
+
+GET     /api/hosts/role/deployments/:roleId controllers.HostController.getAllHostsWhereRoleDeployed(roleId: String)
+
 GET     /api/execs/details/:agentExecId controllers.AgentExecutionController.getAgentExecutionDetails(agentExecId: Int)
 
 GET     /api/master/type/:masterTypeId controllers.MasterTypeController.getMasterType(masterTypeId: Short)

@@ -45,4 +45,6 @@ class DefaultAgentExecutionRepositoryImpl(implicit ec: ExecutionContext) extends
   override def get(id: Int): Future[Option[AgentExecution]] = db.run(agentExecutionTable.filter(_.agentExecId === id).result headOption)
 
   override def getAllMastersForAgent(agentId: Short): Future[Seq[AgentExecution]] = db.run(agentExecutionTable.filter(_.agentId === agentId).result)
+
+  override def getAllMastersOnDeployment(deployId: Int) = db.run()
 }

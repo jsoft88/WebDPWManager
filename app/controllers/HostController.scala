@@ -94,6 +94,18 @@ class HostController @Inject()(cc: ControllerComponents)(implicit ec: ExecutionC
       case None => Future.successful(InternalServerError(noBusinessActor))
     }
   }
+
+  def getAllHostsWhereRoleDeployed(roleId: String) = Action.async { implicit request =>
+    val dummyRoleDeploy = DeploymentByRole(deployId = 0, roleId = roleId, hostId = 0, actorName = "", actorSystemName = "", componentId = 0, port = 0)
+
+    InitialConfiguration.businessActor match {
+      case Some(ar) => (ar ? ReachPersistenceAgentWith(CommandWrapper(DeploymentsForRoleHostListCommand(new DefaultDeploymentByRoleRepositoryImpl(), dummyRoleDeploy)))).mapTo[DeploymentsForRoleHostListResponse]
+        .map(s => Ok(Json.toJson(s.response.map(dp => DeploymentByRoleUIModel(deployId = dp.deployId, actorName = dp.actorName, actorSystemName = dp.actorSystemName, port = dp.port, componentId = dp.componentId, role = DpwRolesUIModel(roleId = dp.roleId, roleLabel = "", roleDescription = "")))))) recover {
+        case ex => InternalServerError(ex.getMessage)
+      }
+      case None => Future.successful(InternalServerError(noBusinessActor))
+    }
+  }
 }
 
 case class HostUIModel(hostId: Short, address: String, deployments: Seq[DeploymentByRoleUIModel], executions: Seq[AgentExecutionUIModel])

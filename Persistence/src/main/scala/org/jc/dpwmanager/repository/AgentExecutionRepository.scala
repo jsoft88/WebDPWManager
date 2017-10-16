@@ -11,5 +11,8 @@ trait AgentExecutionRepository extends BaseRepository[Int, AgentExecution]{
 
   def getUnstoppedMasterForAgent(agentId: Short): Future[Seq[AgentExecution]]
 
+  @Deprecated
   def getAllMastersForAgent(agentId: Short): Future[Seq[AgentExecution]]
+
+  def getAllMastersOnDeployment(deployId: Int): Future[Seq[AgentExecution]]
 }
