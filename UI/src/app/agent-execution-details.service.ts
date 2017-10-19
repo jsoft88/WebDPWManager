@@ -30,7 +30,7 @@ export class AgentExecutionDetailsService {
 }
 
 function handleExecutionDetailsRetrieveError(error: any) {
-  const errorMsg = error.message || `Something went wrong while retrieving execution details.`
+  const errorMsg = error.message || `Something went wrong while retrieving execution details.`;
   return Observable.throw(errorMsg);
 }
 

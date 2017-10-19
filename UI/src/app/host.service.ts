@@ -1,48 +1,112 @@
 import { Injectable } from '@angular/core';
-import {Host} from './host-list/shared/host.model';
+import {DeploymentsByRoles, Host, MasterType} from './host-list/shared/host.model';
 import {Observable} from 'rxjs/Observable';
 import {Http, Response, Headers} from '@angular/http'
 import 'rxjs/add/operator/catch';
 import 'rxjs/add/observable/throw';
+import {AgentExecution} from "./agent-execution/shared/agent-execution.model";
+import {ConstantService} from "./constant-service.service";
 
 @Injectable()
 export class HostService {
 
   // private baseUrl = 'http://localhost:9000/api';
 
-  constructor(private http: Http, private baseUrl: string) { }
+  constructor(private http: Http, private constantsService: ConstantService) { }
 
   getAll(): Observable<Host[]> {
-    const hosts = this.http.get(`${this.baseUrl}/hosts`, { headers: this.getHeaders() }).map(mapHosts).catch(handleHostListRetrieveError);
+    const hosts =
+      this.http
+        .get(`${this.constantsService.API_ENDPOINT}/hosts`, { headers: this.getHeaders() })
+        .map(mapHosts)
+        .catch(handleHostListRetrieveError);
 
     return hosts;
+  }
+
+  addHost(host: Host): Observable<Host> {
+    const hostResponse =
+      this.http
+        .post(`${this.constantsService.API_ENDPOINT}/hosts/add`, JSON.stringify(host), this.getHeaders())
+        .map(data => {
+          if (data.json().error) {
+            Observable.throw(data.json().message);
+          } else {
+            toHost(data.json());
+          }
+        }).catch(handleAddHostError);
+
+    return hostResponse;
   }
 
   private getHeaders() {
     const headers = new Headers();
     headers.append('Accept', 'application/json');
+    headers.append('Content-Type', 'application/json');
 
     return headers;
   }
 }
 
 function mapHosts(response: Response): Host[]  {
-  return response.json().results.map(toHost);
+  return response.json().map(toHost);
 }
 
 function toHost(r: any): Host {
   const host = <Host>({
-    name: r.name,
+    hostId: r.hostId,
     address: r.address,
-    port: Number.parseInt(r.port)
+    deployments: toDeploymentsByRoles(r.deployments),
+    executions: toExecutions(r.executions)
   });
 
   return host;
 }
 
+function toDeploymentsByRoles(jsDeployments: any[]): DeploymentsByRoles[] {
+  let deployments: DeploymentsByRoles[] = [];
+  for (const deploy of jsDeployments) {
+    deployments.push(<DeploymentsByRoles>({
+      deployId: deploy.deployId,
+      actorSystemName: deploy.actorSystemName,
+      actorName: deploy.actorName,
+      port: deploy.port,
+      componentId: deploy.componentId,
+      role: deploy.role
+    }));
+  }
+  return deployments;
+}
+
+function toExecutions(jsExecutions: any[]) {
+  let executions: AgentExecution[] = []
+  for (const exec of jsExecutions) {
+    executions.push(<AgentExecution>({
+      agentExecId: exec.agentExecId,
+      command: exec.command,
+      deployId: exec.deployId,
+      masterType: <MasterType>({
+        masterTypeId: exec.masterType.masterTypeId,
+        masterLabel: exec.masterType.masterLabel
+      }),
+      executionTimestamp: exec.executionTimestamp,
+      cleanStop: exec.cleanStop,
+      agentExecutionDetails: []
+    }));
+    return executions;
+  }
+}
+
 function handleHostListRetrieveError(error: any) {
-  const errDesc = error.message || 'No error description is available'
+  const errDesc = error.message || 'No error description is available';
   const errorMsg = `An error occurred while retrieving hosts. Description: ${ errDesc }.`;
+
+  return Observable.throw(errorMsg);
+}
+
+function handleAddHostError(error: any) {
+  const errDesc = error.message || 'Error server';
+  const errorMsg = `An error occurred while adding a new host to cluster. Description: ${ errDesc }`;
 
   return Observable.throw(errorMsg);
 }

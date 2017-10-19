@@ -1,55 +1,71 @@
-import {Component, Input, OnInit} from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
 import {AgentExecutionDetails} from './shared/agent-execution-details.model';
 import {AgentExecutionDetailsService} from '../agent-execution-details.service';
-import {AgentExecution} from '../agent-execution/shared/agent-execution.model';
 import {MasterService} from '../master.service';
+import {ActivatedRoute} from '@angular/router';
+import {Observable} from 'rxjs/Observable';
+import 'rxjs/add/observable/concat';
+import {MasterField} from '../host-list/shared/host.model';
 
 @Component({
   selector: 'app-agent-execution-details',
   template: './agent-execution-details.component.html',
   styleUrls: ['./agent-execution-details.component.css']
 })
-export class AgentExecutionDetailsComponent implements OnInit {
+export class AgentExecutionDetailsComponent implements OnInit, OnDestroy {
 
   executionDetails: AgentExecutionDetails[];
-
-  @Input() agentExecution: AgentExecution;
 
   executionDetailsRetrieveError = '';
   loadingDetails = true;
   loadingFieldInfo = false;
-  fieldRetrieveError = '';
+
+  errorField: MasterField;
+
+  sub: any;
 
   constructor(
     private agentExecutionDetailsService: AgentExecutionDetailsService,
-    private masterService: MasterService) { }
+    private masterService: MasterService,
+    private route: ActivatedRoute) {
+
+    this.errorField = new MasterField();
+    this.errorField.fieldId = 0;
+    this.errorField.fieldDescription = 'Failed to retrieve master field';
+    this.errorField.fieldName = 'Error';
+  }
 
   ngOnInit() {
-    this.agentExecutionDetailsService.getMastersAgentExecutionDetails(this.agentExecution.agentExecId)
-      .subscribe(
-        details => this.afterDetailsRetrieve(details),
-        e => this.executionDetailsRetrieveError = e,
-        () => this.loadingDetails = false
-      );
+
+    this.sub = this.route.params.subscribe(
+      params => {
+        const agentExecId = Number.parseInt(params['agentExecId']);
+        this.agentExecutionDetailsService.getMastersAgentExecutionDetails(agentExecId)
+          .subscribe(
+            details => this.afterDetailsRetrieve(details),
+            e => this.executionDetailsRetrieveError = e,
+            () => this.loadingDetails = false
+          );
+      }
+    );
   }
 
   private afterDetailsRetrieve(agentExecutionDetails: AgentExecutionDetails[]) {
     this.loadingFieldInfo = true;
-    for (const detail of agentExecutionDetails) {
-      if (this.fieldRetrieveError !== '') {
-        break;
-      }
-      this.masterService.getSingleMasterField(detail.field.fieldId).subscribe(
-        f => detail.field = f,
-        e => {
-          this.fieldRetrieveError = e;
-          this.loadingFieldInfo = false;
-        },
-        () => this.loadingFieldInfo = false
-      );
-    }
+    const batchRetrievals: Observable<MasterField>[] = [];
 
-    this.executionDetails = agentExecutionDetails;
+    agentExecutionDetails.forEach(
+      detail => batchRetrievals.push(this.masterService.getSingleMasterField(detail.field.fieldId))
+    );
+
+    Observable.concat(...batchRetrievals).subscribe(
+      field => agentExecutionDetails.filter(d => d.field.fieldId === field.fieldId)[0].field = field,
+      errField => agentExecutionDetails.filter(d => d.field.fieldId === errField.fieldId)[0].field = errField,
+      () => this.loadingFieldInfo = false
+    );
   }
 
+  ngOnDestroy(): void {
+    this.sub.unsubscribe();
+  }
 }

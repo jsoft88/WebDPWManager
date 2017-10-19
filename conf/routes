@@ -10,15 +10,19 @@ GET     /count                      controllers.CountController.count
 # An example controller showing how to write asynchronous code
 GET     /message                    controllers.AsyncController.message
 
-GET     /api/execs                  controllers.AgentExecutionController.listAllAgentExecutions
+GET     /api/execs/:deployId        controllers.AgentExecutionController.listAllAgentExecutions(deployId: Int)
 
 GET     /api/hosts/roles            controllers.HostController.getAllRoles
 
-GET     /api/hosts/role/:agentId    controllers.HostController.getAgentRole(agentId: Int)
+GET     /api/hosts/role/:roleId     controllers.HostController.getRoleById(roleId: String)
+
+POST    /api/hosts/add              controllers.HostController.addHost
+
+GET     /api/hosts/deployments/details/:deployId controllers.HostController.getSingleDeploymentForRoleById(deployId: Int)
 
 GET     /api/hosts/roles/:hostId    controllers.HostController.getDeploymentsForHost(hostId: Short)
 
-GET     /api/hosts/all              controllers.HostController.getAllHosts()
+GET     /api/hosts/all              controllers.HostController.getAllHosts
 
 GET     /api/hosts/role/deployments/:roleId controllers.HostController.getAllHostsWhereRoleDeployed(roleId: String)
 
@@ -26,7 +30,7 @@ GET     /api/execs/details/:agentExecId controllers.AgentExecutionController.get
 
 GET     /api/master/type/:masterTypeId controllers.MasterTypeController.getMasterType(masterTypeId: Short)
 
-GET     /api/master/types           controllers.MasterTypeController.getMasterTypes()
+GET     /api/master/types           controllers.MasterTypeController.getMasterTypes
 
 GET     /api/master/field/:fieldId  controllers.MasterTypeController.getFieldById(fieldId: Int)
 

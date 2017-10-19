@@ -4,7 +4,7 @@ import {MasterType} from '../../host-list/shared/host.model';
 export class AgentExecution {
   agentExecId: number;
   command: string;
-  agentId: number;
+  deployId: number;
   masterType: MasterType;
   executionTimestamp: number;
   cleanStop: boolean;

@@ -10,7 +10,7 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 case class AgentExecutionListCommand(repository: AgentExecutionRepository, entity: AgentExecution)(implicit ec: ExecutionContext) extends Command[Int, AgentExecution, AgentExecutionListResponse](repository, entity){
   override def execute: Future[AgentExecutionListResponse] = {
-    repository.getAllMastersForAgent(entity.agentId).map(ae => AgentExecutionListResponse(ae)).recover {
+    repository.getAllMastersOnDeployment(entity.deployId).map(AgentExecutionListResponse(_)) recover {
       case ex => throw new Exception(this.toString + ". Failed with: " + ex.getMessage)
     }
   }

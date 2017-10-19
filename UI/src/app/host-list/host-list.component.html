@@ -1,29 +1,6 @@
-<div class="row">
-  <form>
-    <div class="form-group">
-      <label for="hostIp">Host IP</label>
-      <input type="text" class="form-control" id="hostIp" placeholder="Enter ip address">
-    </div>
-    <div class="form-group">
-      <label for="hostPort">Host Port</label>
-      <input type="text" class="form-control" id="hostPort" placeholder="Enter port for akka actor">
-    </div>
-    <div class="form-group">
-      <label for="hostName">Host Name</label>
-      <input type="text" class="form-control" id="hostName" placeholder="Enter a name for this host">
-    </div>
-    <div class="form-group">
-      <div class="btn-group btn-group-justified" *ngFor="let role of availableRoles | async">
-        <div class="btn-group" role="group">
-          <button type="button" class="btn btn-default">{{role.roleLabel}}</button>
-        </div>
-      </div>
-    </div>
-    <div class="form-group">
-      <button type="button" class="btn btn-primary">Add New Host</button>
-    </div>
-  </form>
-</div>
+
+<app-add-host-form></app-add-host-form>
+
 <div class="row">
   <div class="col-sm-2"></div>
   <div class="col-sm-8"><hr></div>
@@ -40,8 +17,8 @@
         <p>Please choose the operation you would like to perform.</p>
       </div>
       <div class="modal-footer">
-        <a href="{{apiEndpoint}}/masters/details" class="btn btn-primary" data-dismiss="modal">View Master Details</a>
-        <a href="{{apiEndpoint}}/execs/agentId/masterId" type="button" class="btn btn-success" data-dismiss="modal">View Master's execution</a>
+        <a routerLink="/masters/details" class="btn btn-primary" data-dismiss="modal">View Master Details</a>
+        <a routerLink="/execs/agentId/masterId" type="button" class="btn btn-success" data-dismiss="modal">View Master's execution</a>
         <button type="button" class="btn btn-info" data-dismiss="modal">Nothing</button>
       </div>
     </div>
@@ -53,16 +30,21 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4>Add New Master</h4>
+        <h4>Deploy New Role on Host</h4>
       </div>
       <div class="modal-body">
-        <p>This will take you to the next step where you will add master details. Keep in mind that adding a new master without restarting the masters cluster, is currently unsupported.
-          DPWManager will stop all masters but this isn't the recommended approach since pipeline will be stopped abruptly. Instead, stop masters one by one, selecting the order
-        that works best for your current pipeline.</p>
+        <p>This will deploy a new role ({{availableRoles.join(', ')}}) on the selected host. Depending on the type of
+        role being deployed, a new type master could be later assigned to it.</p>
+        <p *ngFor="let role of availableRoles; let idx = index">
+          <span *ngIf="idx % 3 == 0"><button type="button" [ngClass]="{'btn btn-primary': true, 'active': selectedIndex === idx}" (click)="modalRoleSelected(role, idx)">{{role.roleLabel}}</button></span>
+          <span *ngIf="idx % 3 == 1"><button type="button" [ngClass]="{'btn btn-warning': true, 'active': selectedIndex === idx}" (click)="modalRoleSelected(role, idx)">{{role.roleLabel}}</button> </span>
+          <span *ngIf="idx % 3 == 2"><button type="button" [ngClass]="{'btn btn-critical': true, 'active': selectedIndex === idx}" (click)="modalRoleSelected(role, idx)">{{role.roleLabel}}</button> </span>
+        </p>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary" data-dismiss="modal">Add New Master</button>
-        <button type="button" class="btn btn-info" data-dismiss="modal">No Thanks</button>
+        <button *ngIf="selectedIndex < 0" type="button" class="btn btn-primary" data-dismiss="modal" disabled="disabled">Deploy Selected Role</button>
+        <button *ngIf="selectedIndex >= 0" type="button" class="btn btn-primary" data-dismiss="modal">Deploy Selected Role</button>
+        <button type="button" class="btn btn-info" data-dismiss="modal">Cancel</button>
       </div>
     </div>
   </div>
@@ -71,27 +53,22 @@
 <div class="row">
   <div class="col-sm-12" *ngFor="let host of hosts">
     <div class="thumbnail">
-      <img src="" alt="Host {{host.name}}">
+      <img src="" alt="Host {{host.address}}">
       <div class="caption">
         <h3>Host is {{host.address}}</h3>
-        <p>An akka actor is listening at port {{host.port}}</p>
-        <p *ngFor="let master of host.masters; let i = index">Masters:
-          <span *ngIf="i%3 == 0" class="label label-primary" data-target=".master-details-modal">{{master.masterLabel}}</span>
-          <span data-target=".master-details-modal" *ngIf="i%3 == 1" class="label label-success" data-target=".master-details-modal">{{master.masterLabel}}</span>
-          <span *ngIf="i%3 == 2" class="label label-info" data-target=".master-details-modal">{{master.masterLabel}}</span>
+        <p>Number of actors deployed: {{host.deployments.length}}</p>
+        <p *ngFor="let deploy of host.deployments">Roles for akka actors (deploy_id | role):
+          <span class="label label-warning">{{deploy.deployId}}|{{deploy.role.roleLabel}}</span>
         </p>
-        <p *ngIf="host.role !== ''">Current role in host is: {{role.roleLabel}}</p>
-        <p *ngIf="host.role === ''">Current role in host is: Host does not have a role assigned.</p>
-        <p><a href="#" class="btn btn-primary" data-target=".add-master-modal">Assign New Master</a>  </p>
-        <div class="dropdown">
-          <button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown" id="hostOptionsDropdown">Options <span class="caret"></span></button>
-          <ul>
-            <li><a href="#">Assign New Master</a></li>
-            <li><a href="#">Assign/Switch Role</a></li>
-            <li *ngIf="host.role"><a href="#">Remove Role</a></li>
-          </ul>
-        </div>
-        <a href="#" class="btn btn-danger">Kill Masters</a>
+        <p *ngFor="let exec of host.executions; let i = index">Masters (deploy_id | master):
+          <span *ngIf="i%3 == 0" class="label label-primary" data-target=".master-details-modal">{{exec.deployId}}|{{exec.masterType.masterLabel}}</span>
+          <span data-target=".master-details-modal" *ngIf="i%3 == 1" class="label label-success" data-target=".master-details-modal">{{exec.deployId}}|{{exec.masterType.masterLabel}}</span>
+          <span *ngIf="i%3 == 2" class="label label-info" data-target=".master-details-modal">{{exec.deployId}}|{{exec.masterType.masterLabel}}</span>
+        </p>
+        <p *ngFor="let exec of host.executions">Execution IDs:
+          <span><a href="">{{exec.agentExecId}}</a></span>
+        </p>
+        <p><a href="#" class="btn btn-primary" data-target=".add-master-modal">Deploy New Role</a></p>
       </div>
     </div>
   </div>

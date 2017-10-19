@@ -15,9 +15,9 @@ export class AgentExecutionService {
   constructor(private http: Http, private constantService: ConstantService) {
   }
 
-  getMastersAgentExecution(): Observable<AgentExecution[]> {
+  getMastersAgentExecution(deployId: number): Observable<AgentExecution[]> {
     const executions = this.http
-      .get(`${this.constantService.API_ENDPOINT}/execs`, {headers: this.getHeaders()})
+      .get(`${this.constantService.API_ENDPOINT}/execs/${ deployId }`, {headers: this.getHeaders()})
       .map(mapAgentExecutions)
       .catch(handleMastersExecutionRetrieveError);
 
@@ -26,7 +26,7 @@ export class AgentExecutionService {
 
   private getHeaders() {
     const headers = new Headers();
-    headers.append('Accept', 'application/json')
+    headers.append('Accept', 'application/json');
     return headers;
   }
 }
@@ -37,7 +37,7 @@ function handleMastersExecutionRetrieveError(error: any) {
 }
 
 function mapAgentExecutions(response: Response): AgentExecution[] {
-  return response.json().results.map(toAgentExecution);
+  return response.json().map(toAgentExecution);
 }
 
 function toAgentExecution(r: any): AgentExecution {

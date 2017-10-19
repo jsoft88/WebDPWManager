@@ -6,12 +6,13 @@ import org.jc.dpwmanager.commands._
 import org.jc.dpwmanager.impl.{DefaultAgentExecutionDetailsRepositoryImpl, DefaultAgentExecutionRepositoryImpl}
 import org.jc.dpwmanager.models.{AgentExecution, AgentExecutionDetails}
 import play.api.mvc._
-import utils.ReachPersistenceAgentWith
+import utils.{ReachPersistenceAgentWith, ReadsAndWrites}
 import akka.pattern.ask
 import akka.util.Timeout
 import initialization.InitialConfiguration
 import play.api.libs.json.{JsPath, JsValue, Json, Writes}
 import play.api.libs.functional.syntax._
+
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -25,36 +26,33 @@ class AgentExecutionController @Inject()(cc: ControllerComponents)(implicit ec: 
 
   implicit val timeout = Timeout(15 seconds)
 
-  implicit val masterFieldWrites: Writes[MasterFieldUIModel] = (
-    (JsPath \ "fieldId").write[Int] and
-      (JsPath \ "fieldName").write[String] and
-      (JsPath \ "fieldDescription").write[String]
-  )(unlift(MasterFieldUIModel.unapply))
+  implicit val masterFieldWrites: Writes[MasterFieldUIModel] = ReadsAndWrites.masterFieldWrites
 
-  implicit val agentExecutionDetailsWrites: Writes[AgentExecutionDetailsUIModel] = (
-    (JsPath \ "field").write[MasterFieldUIModel] and
-      (JsPath \ "value").write[String] and
-      (JsPath \ "fieldEnabled").write[Boolean])(unlift(AgentExecutionDetailsUIModel.unapply))
+  implicit val agentExecutionDetailsWrites: Writes[AgentExecutionDetailsUIModel] = ReadsAndWrites.agentExecutionDetailsWrites
 
-  implicit val agentExecutionWrites: Writes[AgentExecutionUIModel] = (
-    (JsPath \ "agentExecId").write[Int] and
-      (JsPath \ "command").write[String] and
-      (JsPath \ "agentId").write[Short] and
-      (JsPath \ "masterType").write[MasterTypeUIModel] and
-      (JsPath \ "executionTimestamp").write[Long] and
-      (JsPath \ "cleanStop").write[Boolean] and
-      (JsPath \ "agentExecutionDetails").write[Seq[AgentExecutionDetailsUIModel]])(unlift(AgentExecutionUIModel.unapply))
+  implicit val dpwRoleWrites: Writes[DpwRolesUIModel] = ReadsAndWrites.dpwRolesWrites
+
+  implicit val deploymentByRoleWrites: Writes[DeploymentByRoleUIModel] = ReadsAndWrites.deploymentByRoleWrites
+
+  implicit val agentExecutionWrites: Writes[AgentExecutionUIModel] = ReadsAndWrites.agentExecutionWrites
 
   def noBusinessActor: String = "No business actor available to fulfill this request"
 
-  def listAllAgentExecutions = Action.async { implicit request =>
-    val agentExecution = AgentExecution(agentExecId = 0, agentId = request.getQueryString("agentId").getOrElse("0").toShort, cleanStop = false, executionTimestamp = 0L, masterTypeId = 0, command = "")
+  def listAllAgentExecutions(deployId: Int) = Action.async { implicit request =>
+    val agentExecution = AgentExecution(agentExecId = 0, deployId = deployId, cleanStop = false, executionTimestamp = 0L, masterTypeId = 0, command = "")
     InitialConfiguration.businessActor match {
       case Some(ar) => (ar ? ReachPersistenceAgentWith(CommandWrapper(AgentExecutionListCommand(new DefaultAgentExecutionRepositoryImpl(), agentExecution))))
         .mapTo[AgentExecutionListResponse]
         .map(s => Ok(
           Json.toJson(s.response.map(
-            ae => AgentExecutionUIModel(agentExecId = ae.agentExecId, command = ae.command, agentId = ae.agentId, masterType = MasterTypeUIModel(masterTypeId = ae.masterTypeId, masterLabel = ""), executionTimestamp = 0L, cleanStop = ae.cleanStop, agentExecutionDetails = IndexedSeq.empty)
+            ae => AgentExecutionUIModel(
+              agentExecId = ae.agentExecId,
+              command = ae.command,
+              deployment = DeploymentByRoleUIModel(deployId = ae.deployId, actorName = "", actorSystemName = "", port = 0, role = DpwRolesUIModel(roleId = "", roleLabel = "", roleDescription = ""), componentId = 0),
+              masterType = MasterTypeUIModel(masterTypeId = ae.masterTypeId, masterLabel = ""),
+              executionTimestamp = ae.executionTimestamp,
+              cleanStop = ae.cleanStop,
+              agentExecutionDetails = IndexedSeq.empty)
           ))
         )) recover {
           case ex: Exception => InternalServerError("An error occurred while retrieving executions from agent: " + ex.getMessage)
@@ -78,6 +76,6 @@ class AgentExecutionController @Inject()(cc: ControllerComponents)(implicit ec: 
   }
 }
 
-case class AgentExecutionUIModel(agentExecId: Int, command: String, agentId: Short, masterType: MasterTypeUIModel, executionTimestamp: Long, cleanStop: Boolean, agentExecutionDetails: Seq[AgentExecutionDetailsUIModel])
+case class AgentExecutionUIModel(agentExecId: Int, command: String, deployment: DeploymentByRoleUIModel, masterType: MasterTypeUIModel, executionTimestamp: Long, cleanStop: Boolean, agentExecutionDetails: Seq[AgentExecutionDetailsUIModel])
 
 case class AgentExecutionDetailsUIModel(field: MasterFieldUIModel, value: String, fieldEnabled: Boolean)

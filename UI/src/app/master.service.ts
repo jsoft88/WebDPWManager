@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import {ConstantService} from './constant-service.service';
-import {Http, Response} from '@angular/http';
+import {Http, Response, Headers} from '@angular/http';
 import {Observable} from 'rxjs/Observable';
 import {MasterField, MasterType} from './host-list/shared/host.model';
 import 'rxjs/add/operator/catch';
@@ -24,19 +24,19 @@ export class MasterService {
     const masterFields =
       this.http.get(`${this.constantService.API_ENDPOINT}/master/fields/${masterTypeId}`, this.getHeaders())
         .map(data => toMasterField(data.json()))
-        .catch(handleFieldsRetrieveError);
+        .catch(err => handleFieldsRetrieveError(err));
     return masterFields;
   }
 
   getSingleMasterField(fieldId: number): Observable<MasterField> {
-    const masterFields =
+    const masterField =
       this.http.get(`${this.constantService.API_ENDPOINT}/master/field/${fieldId}`, this.getHeaders())
         .map(data => toMasterField(data.json()))
-        .catch(handleFieldsRetrieveError);
-      return masterFields[0];
+        .catch(err => handleSingleFieldRetrieveError(err, fieldId));
+      return masterField;
   }
 
-  private getHeaders() {
+  private getHeaders(): Headers {
     const headers = new Headers();
     headers.append('accept', 'application/json');
 
@@ -63,12 +63,25 @@ function toMasterField(r: any): MasterField {
 
 function handleGetMasterTypeError(error: any) {
   const errorDesc = error.message || 'No error description is available';
-  const errorMsg = `An error occurred while retrieving master type info: ${errorDesc}`
+  const errorMsg = `An error occurred while retrieving master type info: ${errorDesc}`;
   return Observable.throw(errorMsg);
+}
+
+function handleSingleFieldRetrieveError(error: any, fieldId: number) {
+  const errorDesc = error.message || 'No error description is available';
+  const errorMsg = `An error occurred while retrieving master field info: ${errorDesc}`;
+
+  const errField = new MasterField();
+  errField.fieldId = fieldId;
+  errField.fieldDescription = errorMsg;
+  errField.fieldName = 'error';
+
+  return Observable.throw(errField);
 }
 
 function handleFieldsRetrieveError(error: any) {
   const errorDesc = error.message || 'No error description is available';
-  const errorMsg = `An error occurred while retrieving master field info: ${errorDesc}`
+  const errorMsg = `An error occurred while retrieving master field info: ${errorDesc}`;
+
   return Observable.throw(errorMsg);
 }

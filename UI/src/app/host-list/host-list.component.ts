@@ -1,17 +1,16 @@
 import { Component, OnInit } from '@angular/core';
-import { Host } from './shared/host.model';
+import {DeploymentsByRoles, Host, MasterType} from './shared/host.model';
 import {HostService} from '../host.service';
 import {ConstantService} from '../constant-service.service';
 import {DpwRolesService} from '../dpwroles-service.service';
 import {DpwRoles} from '../dpwroles-list/shared/dpw-roles.model';
+import {DeploymentByRoleService} from '../deployment-by-role-service.service';
+import {AgentExecutionService} from '../agent-execution.service';
+import {MasterService} from '../master.service';
 
 @Component({
   selector: 'app-host-list',
-  template: `
-    <p>
-      host-list Works!
-    </p>
-  `,
+  template: './host-list.component.html',
   styleUrls: ['./host-list.component.css']
 })
 export class HostListComponent implements OnInit {
@@ -21,16 +20,25 @@ export class HostListComponent implements OnInit {
   isLoading = true;
   apiEndpoint = '';
   availableRoles: DpwRoles[];
+  selectedRoleToAssign: DpwRoles;
+  selectedIndex: number;
 
-  constructor(private hostService: HostService, private constants: ConstantService, private dpwRolesService: DpwRolesService) {
+  constructor(
+    private hostService: HostService,
+    private constants: ConstantService,
+    private dpwRolesService: DpwRolesService,
+    private deploymentsByRoleService: DeploymentByRoleService,
+    private executionService: AgentExecutionService,
+    private masterService: MasterService) {
+
     this.apiEndpoint = this.constants.API_ENDPOINT;
+    this.selectedIndex = -1;
   }
 
   ngOnInit() {
     this.hostService.getAll().subscribe(
       hl => {
-        this.retrieveRoleForHost(hl);
-
+        this.retrieveDeployments(hl);
       },
       e => this.errorMessage = e,
       () => this.isLoading = false
@@ -49,21 +57,55 @@ export class HostListComponent implements OnInit {
     return new Array(dummyR);
   }
 
-  private retrieveRoleForHost(hosts: Host[]) {
-    const errRole = new DpwRoles();
-    errRole.roleLabel = 'Failed to Retrieve role';
-    errRole.roleId = 'invalid';
-
-    for (const host of hosts) {
-      this.dpwRolesService.getDpwRole().subscribe(
-        role => host.role = role,
-        e => host.role = errRole
-      )
+  modalRoleSelected(role: DpwRoles, index: number) {
+    this.selectedRoleToAssign = role;
+    if (this.selectedIndex === index) {
+      this.selectedIndex = -1;
+    } else {
+      this.selectedIndex = index;
     }
   }
 
-  private retrieveMastersRunningOnHost(hosts: Host[]) {
-    this.
+  private retrieveDeployments(hosts: Host[]) {
+    const deploymentDetailErr = new DeploymentsByRoles();
+
+    deploymentDetailErr.deployId = 0;
+    deploymentDetailErr.actorName = 'unavailable';
+    deploymentDetailErr.actorSystemName = 'unavailable';
+    deploymentDetailErr.role = new DpwRoles();
+    deploymentDetailErr.componentId = 0;
+
+    for (const host of hosts) {
+      host.deployments.forEach(d => this.deploymentsByRoleService.getDeploymentDetails(d.deployId).subscribe(
+        dpd => {
+          this.dpwRolesService.getDpwRole(dpd.role.roleId).subscribe(
+            role => dpd.role = role,
+            err => dpd.role = this.dummyDpwRole(err)[0],
+            () => host.deployments.push(dpd)
+          );
+          this.executionService.getMastersAgentExecution(dpd.deployId).subscribe(
+            execs => {
+              execs.forEach( exec =>
+                this.masterService.getMasterType(exec.masterType.masterTypeId).subscribe(
+                  master => exec.masterType = master,
+                  err => {
+                    const masterErr = new MasterType();
+                    masterErr.masterTypeId = 0;
+                    masterErr.masterLabel = 'Not found';
+
+                    exec.masterType = masterErr
+                  }
+                )
+              )
+            }
+          )
+        },
+        err => host.deployments.push(deploymentDetailErr)
+      ));
+    }
   }
 
+  clickAddHost() {
+
+  }
 }

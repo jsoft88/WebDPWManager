@@ -20,9 +20,9 @@ export class DpwRolesService {
     return roles;
   }
 
-  getDpwRole(): Observable<DpwRoles> {
+  getDpwRole(roleId: string): Observable<DpwRoles> {
     const role = this.http
-      .get(`${this.constantService.API_ENDPOINT}/hosts/role/`, this.getHeaders())
+      .get(`${this.constantService.API_ENDPOINT}/hosts/role/${ roleId }`, this.getHeaders())
       .map(mapDpwRoles[0])
       .catch(handleDpwRolesRetrieveError)
 

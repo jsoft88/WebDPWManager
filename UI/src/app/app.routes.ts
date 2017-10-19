@@ -10,12 +10,17 @@ const routes: Routes = [
   },
 
   {
-    path: 'execs',
+    path: 'execs/:deployId',
     component: AgentExecutionComponent
   },
 
   {
     path: 'execs/details/:agentExecId',
+    component: AgentExecutionDetailsComponent
+  },
+
+  {
+    path: 'masters/details/:masterTypeId/:deployId',
     component: AgentExecutionDetailsComponent
   },
 

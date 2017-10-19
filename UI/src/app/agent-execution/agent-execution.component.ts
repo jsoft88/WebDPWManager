@@ -1,52 +1,47 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, OnDestroy, OnInit} from '@angular/core';
 import { AgentExecution } from './shared/agent-execution.model';
 import { AgentExecutionService } from '../agent-execution.service';
-import {AgentExecutionDetailsService} from '../agent-execution-details.service';
 import {MasterType} from '../host-list/shared/host.model';
+import {ActivatedRoute, Router} from '@angular/router';
 
 @Component({
   selector: 'app-agent-execution',
   template: './agent-execution.component.html',
   styles: []
 })
-export class AgentExecutionComponent implements OnInit {
+export class AgentExecutionComponent implements OnInit, OnDestroy {
 
   agentExecutions: AgentExecution[] = [];
 
   errorMessage = '';
 
-  executionDetailsRetrieveError = '';
+  sub: any;
 
-  loadingExecutionDetails = false;
-
-  constructor(private agentExecutionService: AgentExecutionService, private agentExecutionDetailsService: AgentExecutionDetailsService) { }
+  constructor(
+    private agentExecutionService: AgentExecutionService,
+    private activatedRoute: ActivatedRoute,
+    private route: Router) { }
 
   ngOnInit() {
-    this.agentExecutionService
-      .getMastersAgentExecution()
-      .subscribe(
-        e => {
-          this.agentExecutions = e
-          this.postExecutionsRetrieve();
-        },
-        err => this.errorMessage = err
-      );
-  }
-
-  private postExecutionsRetrieve() {
-    this.loadingExecutionDetails = true;
-    for (const exec of this.agentExecutions) {
-      this.agentExecutionDetailsService
-        .getMastersAgentExecutionDetails(exec.agentExecId)
-        .subscribe(
-          details => exec.agentExecutionDetails = details,
-          err => this.executionDetailsRetrieveError = err,
-          () => this.loadingExecutionDetails = false
+    this.sub = this.activatedRoute.params.subscribe(
+      params => {
+        const deployId = params['deployId'];
+        this.agentExecutionService.getMastersAgentExecution(deployId).subscribe(
+          execs => this.agentExecutions = execs,
+          err => this.errorMessage = err
         );
-    }
+      }
+    );
   }
-
   clickMasterType(masterType: MasterType) {
 
+  }
+
+  clickAgentExecutionDetails(agentExecution: AgentExecution) {
+    this.route.navigateByUrl(`/execs/details/${ agentExecution.agentExecId }`);
+  }
+
+  ngOnDestroy(): void {
+    this.sub.unsubscribe();
   }
 }

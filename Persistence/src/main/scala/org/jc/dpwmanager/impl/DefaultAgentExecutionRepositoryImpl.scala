@@ -26,6 +26,7 @@ class DefaultAgentExecutionRepositoryImpl(implicit ec: ExecutionContext) extends
     case Failure(ex) => throw new Exception("Schema creation failed", ex)
   })
 
+  @Deprecated
   override def getUnstoppedMasterForAgent(agentId: Short): Future[Seq[AgentExecution]] = {
     val q = agentExecutionTable.filter((aet => !aet.cleanStop && aet.agentId === agentId))
     db.run(q.result)
@@ -46,5 +47,5 @@ class DefaultAgentExecutionRepositoryImpl(implicit ec: ExecutionContext) extends
 
   override def getAllMastersForAgent(agentId: Short): Future[Seq[AgentExecution]] = db.run(agentExecutionTable.filter(_.agentId === agentId).result)
 
-  override def getAllMastersOnDeployment(deployId: Int) = db.run()
+  override def getAllMastersOnDeployment(deployId: Int) = db.run(agentExecutionTable.filter(aet => !aet.cleanStop && aet.deployId === deployId).result)
 }

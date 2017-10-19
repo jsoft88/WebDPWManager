@@ -9,10 +9,13 @@ import scala.concurrent.Future
   */
 trait AgentExecutionRepository extends BaseRepository[Int, AgentExecution]{
 
+  @Deprecated
   def getUnstoppedMasterForAgent(agentId: Short): Future[Seq[AgentExecution]]
 
   @Deprecated
   def getAllMastersForAgent(agentId: Short): Future[Seq[AgentExecution]]
 
   def getAllMastersOnDeployment(deployId: Int): Future[Seq[AgentExecution]]
+
+  def getUnstoppedMasterForAgent(deployId: Int): Future[Seq[AgentExecution]]
 }
