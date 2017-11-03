@@ -2,19 +2,34 @@ package controllers
 
 import javax.inject.{Inject, Singleton}
 
+import actors.SocketClientActor
+import akka.actor.{Actor, ActorRef, Props}
 import initialization.InitialConfiguration
-import play.api.mvc.{AbstractController, ControllerComponents}
+import play.api.mvc.{AbstractController, ControllerComponents, WebSocket}
 import utils.{ReachPersistenceAgentWith, ReadsAndWrites}
 import akka.pattern.ask
+import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 import org.jc.dpwmanager.commands._
 import org.jc.dpwmanager.impl.{DefaultAgentRepositoryImpl, DefaultDeploymentByRoleRepositoryImpl, DefaultDpwRolesRepositoryImpl, DefaultHostRepositoryImpl}
 import org.jc.dpwmanager.models.{Agent, DeploymentByRole, DpwRoles, Host}
+import org.jc.dpwmanager.util.{DeployRoleWrapper, RoleTranslator, StartRoleInHost}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
+import play.api.libs.streams.ActorFlow
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
+
+object WebSocketActor {
+  def props(out: ActorRef) = Props(new WebSocketActor(out))
+}
+
+class WebSocketActor(out: ActorRef) extends Actor {
+  override def receive: Receive = {
+    case _ => out ! ("There are no persistence roles available in cluster, most operations through web manager will fail.")
+  }
+}
 
 @Singleton
 class HostController @Inject()(cc: ControllerComponents)(implicit ec: ExecutionContext) extends AbstractController(cc){
@@ -38,6 +53,17 @@ class HostController @Inject()(cc: ControllerComponents)(implicit ec: ExecutionC
   implicit val deploymentByRoleWrites: Writes[DeploymentByRoleUIModel] = ReadsAndWrites.deploymentByRoleWrites
 
   implicit val hostWrites: Writes[HostUIModel] = ReadsAndWrites.hostWrites
+
+  implicit val addFormWrites: Writes[AddHostResponse] = (
+    (JsPath \ "host").write[HostUIModel] and
+      (JsPath \ "errors").write[Seq[String]]
+  )(unlift(AddHostResponse.unapply))
+
+  def socket = WebSocket.accept[String, String] { request =>
+    ActorFlow.actorRef { out =>
+      Props(new SocketClientActor(out))
+    }
+  }
 
   def getAllRoles = Action.async { implicit request =>
     val dpwRole = DpwRoles(roleId = "none", roleLabel = "", roleDescription = "")
@@ -135,20 +161,81 @@ class HostController @Inject()(cc: ControllerComponents)(implicit ec: ExecutionC
     val hostResult = request.body.validate[HostUIModel]
     hostResult.fold(
       errors => {
-        Future.successful(InternalServerError(Json.obj("error" -> true, "message" -> JsError.toJson(errors))))
+        val dummyHost = HostUIModel(hostId = 0, deployments = Seq(), address = "", executions = Seq())
+        Future.successful(InternalServerError(Json.toJson(AddHostResponse(host = dummyHost, errors = Seq(JsError.toJson(errors).toString()))).toString()))
       },
       host => {
+        val hostToSave = Host(hostId = 0, address = host.address)
+        val deploymentByRole = DeploymentByRole(
+          deployId = 0,
+          hostId = 0,
+          actorName = host.deployments.head.actorName,
+          actorSystemName = host.deployments.head.actorSystemName,
+          roleId = host.deployments.head.role.roleId,
+          componentId = 0,
+          port = host.deployments.head.port)
+
+
         InitialConfiguration.businessActor match {
-          case Some(ar) => (ar ? ReachPersistenceAgentWith(CommandWrapper(HostInsertCommand(new DefaultHostRepositoryImpl(), Host(hostId = 0, address = host.address))))).mapTo[HostInsertResponse]
-            .map(s => Ok(Json.toJson(host.copy(hostId = s.response.hostId)))) recover {
-            case ex => InternalServerError(ex.getMessage)
+          case Some(ar) => {
+            (ar ? ReachPersistenceAgentWith(CommandWrapper(HostInsertCommand(new DefaultHostRepositoryImpl(), hostToSave))))
+              .mapTo[HostInsertResponse]
+                .flatMap(s => (ar ? CommandWrapper(DeploymentInsertCommand(new DefaultDeploymentByRoleRepositoryImpl(), deploymentByRole.copy(hostId = s.response.hostId))))
+                  .mapTo[DeploymentInsertResponse]
+                  .map(dins => {
+                    (ar ? StartRoleInHost(
+                      DeployRoleWrapper(
+                        actorName = dins.response.actorName,
+                        actorSystemName = dins.response.actorSystemName,
+                        address = s.response.address,
+                        port = dins.response.port,
+                        role = RoleTranslator.translateRole(dins.response.roleId))))
+                    Ok(Json.toJson(AddHostResponse(host = host.copy(hostId = s.response.hostId, deployments = Seq(host.deployments.head.copy(deployId = dins.response.deployId, componentId = dins.response.componentId))), errors = Seq())))
+                  })
+                  .recover {
+                    case dpInsertEx => InternalServerError(Json.toJson(AddHostResponse(host = host.copy(hostId = s.response.hostId), errors = Seq(dpInsertEx.getMessage))))
+                  }).recover {
+              case ex => InternalServerError(Json.toJson(AddHostResponse(host, errors = Seq("Failed to add host to cluster. Error is: " + ex.getMessage))))
+            }
           }
           case None => Future.successful(InternalServerError(noBusinessActor))
         }
       }
     )
   }
+
+  def deployNewRole() = Action(parse.json).async { request =>
+    val deploymentResult = request.body.validate[HostUIModel]
+    deploymentResult.fold(
+      errors => {
+        val dummyHost = HostUIModel(hostId = 0, deployments = Seq(), address = "", executions = Seq())
+        Future.successful(InternalServerError(Json.toJson(AddHostResponse(host = dummyHost, errors = Seq(JsError.toJson(errors).toString())))))
+    },
+      host => {
+      val deploymentToAdd =
+        DeploymentByRole(
+          deployId = 0,
+          actorName = host.deployments.head.actorName,
+          actorSystemName = host.deployments.head.actorSystemName,
+          componentId = 0,
+          roleId = host.deployments.head.role.roleId,
+          port = host.deployments.head.port,
+          hostId = host.hostId
+        )
+
+        InitialConfiguration.businessActor match {
+          case Some(ar) => (ar ? ReachPersistenceAgentWith(CommandWrapper(DeploymentInsertCommand(new DefaultDeploymentByRoleRepositoryImpl(), deploymentToAdd))))
+              .mapTo[DeploymentInsertResponse].map(s => Ok(Json.toJson(AddHostResponse(host.copy(deployments = Seq(host.deployments.head.copy(deployId = s.response.deployId, componentId = s.response.componentId))), Seq()))))
+              .recover {
+                case ex => InternalServerError(Json.toJson(AddHostResponse(host = host, errors = Seq("Error while deploying role: " + ex.getMessage))))
+              }
+          case None => Future.successful(InternalServerError(Json.toJson(AddHostResponse(host = host, errors = Seq(noBusinessActor)))))
+        }
+    })
+  }
 }
+
+case class AddHostResponse(host: HostUIModel, errors: Seq[String])
 
 case class HostUIModel(hostId: Short, address: String, deployments: Seq[DeploymentByRoleUIModel], executions: Seq[AgentExecutionUIModel])
 

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { AgentExecution } from './agent-execution/shared/agent-execution.model';
 import { AgentExecutionDetails } from './agent-execution-details/shared/agent-execution-details.model';
-import { Http, Response, RequestOptions, Headers } from '@angular/http';
+import { Http, Response, Headers } from '@angular/http';
 import { Observable } from 'rxjs/Observable';
 import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/catch';
@@ -47,7 +47,7 @@ function toAgentExecution(r: any): AgentExecution {
   const agentExecutionDetails = [];
 
   const agentExecution = <AgentExecution>({
-    agentId: Number.parseInt(r.agentId),
+    deployId: Number.parseInt(r.deployId),
     cleanStop: r.cleanStop,
     masterType: masterType,
     executionTimestamp: Number(r.executionTimestamp),

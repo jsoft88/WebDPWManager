@@ -4,11 +4,13 @@ import {Http, Response} from '@angular/http';
 import {Observable} from 'rxjs/Observable';
 import 'rxjs/add/operator/catch';
 import 'rxjs/add/observable/throw';
-import {DeploymentsByRoles} from "./host-list/shared/host.model";
-import {DpwRoles} from "./dpwroles-list/shared/dpw-roles.model";
+import {DeploymentsByRoles, Host} from './host-list/shared/host.model';
+import {DpwRoles} from './dpwroles-list/shared/dpw-roles.model';
 
 @Injectable()
 export class DeploymentByRoleService {
+
+  host: Host;
 
   constructor(private http: Http, private constantsService: ConstantService) { }
 
@@ -22,9 +24,22 @@ export class DeploymentByRoleService {
 
   }
 
+  addDeployment(host: Host): Observable<Host> {
+    const savedDeployment =
+      this.http
+        .post(`${this.constantsService.API_ENDPOINT}/hosts/deployments/add`, JSON.stringify(host), this.getHeaders())
+        .map(response => {
+          host.deployments.push(toDeploymentsByRoles(response.json().host.deployments))
+        })
+        .catch(handleAddDeploymentError);
+
+    return savedDeployment;
+  }
+
   private getHeaders(): Headers {
     const headers = new Headers();
     headers.append('accept', 'application/json');
+    headers.append('Content-Type', 'application/json');
     return headers;
   }
 }
@@ -42,6 +57,10 @@ function toDeploymentsByRoles(r: any) {
     })
   });
   return deploymentsByRoles;
+}
+
+function handleAddDeploymentError(response: Response) {
+  return Observable.throw(`An error occurred while doing deployment: ${response.json().errors[0]}`);
 }
 
 function deploymentDetailsRetrieveError(error: any) {

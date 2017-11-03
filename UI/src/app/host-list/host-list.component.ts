@@ -7,6 +7,8 @@ import {DpwRoles} from '../dpwroles-list/shared/dpw-roles.model';
 import {DeploymentByRoleService} from '../deployment-by-role-service.service';
 import {AgentExecutionService} from '../agent-execution.service';
 import {MasterService} from '../master.service';
+import {AgentExecution} from '../agent-execution/shared/agent-execution.model';
+import {Router} from '@angular/router';
 
 @Component({
   selector: 'app-host-list',
@@ -22,6 +24,9 @@ export class HostListComponent implements OnInit {
   availableRoles: DpwRoles[];
   selectedRoleToAssign: DpwRoles;
   selectedIndex: number;
+  selectedAgentExecution: AgentExecution;
+  modalForHost: Host;
+  deploys: DeploymentsByRoles[];
 
   constructor(
     private hostService: HostService,
@@ -29,7 +34,8 @@ export class HostListComponent implements OnInit {
     private dpwRolesService: DpwRolesService,
     private deploymentsByRoleService: DeploymentByRoleService,
     private executionService: AgentExecutionService,
-    private masterService: MasterService) {
+    private masterService: MasterService,
+    private router: Router) {
 
     this.apiEndpoint = this.constants.API_ENDPOINT;
     this.selectedIndex = -1;
@@ -105,7 +111,20 @@ export class HostListComponent implements OnInit {
     }
   }
 
-  clickAddHost() {
+  onExecutionClick(execution: AgentExecution) {
+    this.selectedAgentExecution = execution;
+  }
 
+  onDeploymentClick(deployment: DeploymentsByRoles) {
+    this.router.navigateByUrl(`/execs/${ deployment.deployId }`);
+  }
+
+  onNewRoleClick(host: Host) {
+    this.modalForHost = host;
+  }
+
+  onDeployRoleClicked() {
+    this.modalForHost.deployments.push()
+    this.availableRoles[this.selectedIndex]
   }
 }

@@ -1,6 +1,6 @@
 package org.jc.dpwmanager.agent
 
-import akka.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props, RootActorPath}
+import akka.actor.{Actor, ActorRef, ActorSystem, PoisonPill, Props, RootActorPath, Status}
 import akka.cluster.{Cluster, MemberStatus}
 import akka.cluster.ClusterEvent.{CurrentClusterState, MemberEvent}
 import akka.util.Timeout
@@ -8,6 +8,7 @@ import org.jc.dpwmanager.commands._
 import org.jc.dpwmanager.impl._
 import org.jc.dpwmanager.models.{Agent, AgentExecution}
 import org.jc.dpwmanager.util._
+
 import scala.concurrent.duration._
 import scala.util.{Failure, Success, Try}
 import sys.process._
@@ -53,6 +54,8 @@ class Agent(persistenceClusterSeedNodes: Array[String], persistenceActorName: St
   implicit val ec: ExecutionContext = context.dispatcher
 
   override def receive: Receive = {
+    case PersistenceActorsInformation(paths) => paths map { entry => persistenceActors :+ context.actorSelection(RootActorPath(entry._2) + "/user/" + entry._1)}
+
     case DeployMasterStart(msgWrapper) => {
       persistenceActors headOption match {
         case Some(pa) => {
@@ -61,7 +64,6 @@ class Agent(persistenceClusterSeedNodes: Array[String], persistenceActorName: St
             procHandler = Some(process.run())
           } match {
             case Success(_) => {
-              DeployMasterCompleted(msgWrapper)
               agentExecution = Some(AgentExecution(agentExecId = 0, command = msgWrapper.execArgs.commandToString(), cleanStop = false, executionTimestamp = System.currentTimeMillis(), agentId = agentId, masterTypeId = 0))
               pa ? AgentExecutionInsertCommand onComplete {
                 case Success(a: AgentExecution) => {
@@ -70,14 +72,14 @@ class Agent(persistenceClusterSeedNodes: Array[String], persistenceActorName: St
                 }
                 case Failure(ex) => {
                   procHandler match { case Some(p) => p.destroy() case None => }
-                  sender() ! DeployMasterFailed(ex.getMessage)
+                  sender() ! Status.Failure(new Exception("Failed to deploy master in host: " + ex.getMessage))
                 }
               }
             }
-            case Failure(ex) => DeployMasterFailed(ex.getMessage)
+            case Failure(ex) => Status.Failure(new Exception("Failed to deploy master in host: " + ex.getMessage))
           }
         }
-        case None => sender() ! DeployMasterFailed("No persistence agents are available.")
+        case None => sender() ! Status.Failure(new Exception("No persistence agents are available."))
       }
     }
     case StopMaster(msgWrapper) => {
@@ -126,7 +128,7 @@ class Agent(persistenceClusterSeedNodes: Array[String], persistenceActorName: St
   override def preStart(): Unit = {
     cluster.subscribe(self, classOf[MemberEvent])
     //block on preStart to retrieve persistence actors, if none found, fail
-    for (s <- persistenceClusterSeedNodes) { (context.actorSelection(s + "/user/" + persistenceActorName) resolveOne) onComplete { case Success(ar) => persistenceActors :+ ar } }
+
     persistenceActors headOption match {
       case Some(pa) => {
         pa ? AgentInsertCommand(new DefaultAgentRepositoryImpl, Agent(port = self.path.address.port.get, host = self.path.address.host.get, agentId = 0, actorName = self.path.name, actorSystemName = actorSystemName)) onComplete {

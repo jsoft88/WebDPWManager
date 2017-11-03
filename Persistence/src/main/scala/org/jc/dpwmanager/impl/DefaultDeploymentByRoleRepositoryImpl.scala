@@ -1,7 +1,7 @@
 package org.jc.dpwmanager.impl
 
 import org.jc.dpwmanager.db.Database
-import org.jc.dpwmanager.models.{DeploymentByRole, DeploymentByRoleTable, DpwRoles, Host}
+import org.jc.dpwmanager.models._
 import org.jc.dpwmanager.repository.DeploymentByRoleRepository
 import slick.jdbc.PostgresProfile.api._
 
@@ -35,4 +35,14 @@ class DefaultDeploymentByRoleRepositoryImpl(implicit ec: ExecutionContext) exten
   override def getAllDeploymentsForRole(dpwRole: DpwRoles) = db.run(deploymentsByRoles.filter(_.roleId === dpwRole.roleId).result)
 
   override def getAllDeploymentsInHost(host: Host) = db.run(deploymentsByRoles.filter(_.hostId === host.hostId).result)
+
+  override def getActorSystemHosts(actorSystemName: String) = {
+    val hosts = TableQuery[HostTable]
+    val query =
+      for {
+        (dbr, h) <- deploymentsByRoles join hosts on (_.hostId === _.hostId)
+      } yield h
+
+    db.run(query)
+  }
 }

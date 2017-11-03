@@ -2,9 +2,10 @@ package org.jc.dpwmanager.actors
 
 import akka.actor.{Actor, Status}
 import org.jc.dpwmanager.commands._
-import org.jc.dpwmanager.impl.DefaultAgentRepositoryImpl
-import org.jc.dpwmanager.models.Agent
-
+import org.jc.dpwmanager.impl.{DefaultAgentRepositoryImpl, DefaultDeploymentByRoleRepositoryImpl}
+import org.jc.dpwmanager.models.{Agent, DeploymentByRole}
+import org.jc.dpwmanager.util.BusinessRole
+import akka.pattern.ask
 import scala.concurrent.ExecutionContext
 import scala.util.{Failure, Success}
 
@@ -22,10 +23,7 @@ class DBManager(actorName: String, actorSystemName: String) extends Actor {
   implicit val ec: ExecutionContext = context.dispatcher
 
   override def receive = {
-    case CommandWrapper(command) => (command execute) onComplete {
-      case Success(r: CommandResponseWrapper[_]) => sender ! r
-      case Failure(ex) => sender ! Status.Failure(new Exception("Command: " + command.toString + " failed with " + ex.getMessage))
-    }
+    case CommandWrapper(command) => (command execute) map _
 
       //This is processed only when registering the agent at the database
     case AgentInsertResponse(response: Agent) if initializing => myAgentId = response.agentId
@@ -44,7 +42,17 @@ class DBManager(actorName: String, actorSystemName: String) extends Actor {
   }
 
   override def preStart(): Unit = {
-    val agent = Agent(agentId = 0, host = self.path.address.host.get, port = self.path.address.port.get, actorName = actorName, actorSystemName = actorSystemName)
-    self ! CommandWrapper(AgentInsertCommand(new DefaultAgentRepositoryImpl, agent))
+    val deploymentByRole = DeploymentByRole(
+      deployId = 0,
+      hostId = 0,
+      actorName = self.path.name,
+      actorSystemName = self.path.address.system,
+      port = self.path.address.port.get.asInstanceOf[Short],
+      roleId = BusinessRole.toString,
+      componentId = 0)
+
+    self ? CommandWrapper(DeploymentInsertCommand(new DefaultDeploymentByRoleRepositoryImpl(), deploymentByRole)) recover {
+      case ex => send
+    }
   }
 }

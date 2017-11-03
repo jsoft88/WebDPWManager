@@ -1,32 +1,15 @@
 <div class="row">
-  <form #addHostForm="ngForm" (ngSubmit)="addHostSubmit()">
+  <form #addHostForm="ngForm" (ngSubmit)="addHostSubmit(addHostForm)">
     <div class="form-group">
       <label for="hostIp">Host IP</label>
-      <input type="text" class="form-control" id="hostIp" placeholder="Enter ip address" [(ngModel)]="host.address" name="address">
+      <input type="text" class="form-control" id="hostIp" placeholder="Enter ip address" [(ngModel)]="host.address" name="address" required #address="ngModel">
+      <div class="alert alert-danger" [hidden]="address.valid || address.pristine" role="alert">Please enter host ip address</div>
     </div>
     <div class="form-group" [hidden]="moreOptionsClicked">
-      <button type="submit" class="btn btn-primary" (click)="submitForm">Add New Host</button>
-      <button type="button" class="btn btn-success" (click)="">More Options</button>
+      <button type="submit" class="btn btn-primary" (click)="submitForm()">Add New Host</button>
+      <button type="button" class="btn btn-success" (click)="onMoreOptionsClick()">More Options</button>
     </div>
-    <div class="form-group" [hidden]="!moreOptionsClicked">
-      <div class="btn-group btn-group-justified" *ngFor="let role of availableRoles">
-        <div class="btn-group" role="group">
-          <button type="button" class="btn btn-default">{{role.roleLabel}}</button>
-        </div>
-      </div>
-    </div>
-    <div class="form-group" [hidden]="!moreOptionsClicked">
-      <label for="hostPort">Host Port</label>
-      <input type="text" class="form-control" id="hostPort" placeholder="Enter port for akka actor">
-    </div>
-    <div class="form-group" [hidden]="!moreOptionsClicked">
-      <label for="actorName">Actor Name</label>
-      <input type="text" class="form-control" id="actorName" placeholder="Name for akka actor">
-    </div>
-    <div class="form-group" [hidden]="!moreOptionsClicked">
-      <label for="actorSystemName">Actor System Name</label>
-      <input type="text" class="form-control" id="actorSystemName" placeholder="Actor System Name for actor">
-    </div>
+    <app-add-deployment-form [hidden]="!moreOptionsClicked" [(parentDeploymentByRole)]="deployment"></app-add-deployment-form>
     <div class="form-group" [hidden]="!moreOptionsClicked">
       <button type="button" class="btn btn-primary">Add New Host</button>
     </div>

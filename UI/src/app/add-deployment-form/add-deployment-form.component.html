@@ -1,0 +1,23 @@
+<div class="form-group">
+  <div class="btn-group btn-group-justified" *ngFor="let role of availableRoles">
+    <div class="btn-group" role="group">
+      <button type="button" [ngClass]="{'btn btn-default': true, active: role.roleLabel === selectedRole.roleLabel}" (click)="onRoleSelected(role)">{{role.roleLabel}}</button>
+      <div class="alert alert-danger" role="alert" [hidden]="selectedRole.roleLabel !== ''">Choose a DPW role for this host.</div>
+    </div>
+  </div>
+</div>
+<div class="form-group">
+  <label for="hostPort">Host Port</label>
+  <input type="text" class="form-control" id="hostPort" placeholder="Enter port for akka actor" (change)="onDeploymentChange()" [(ngModel)]="parentDeploymentByRole.port" #port="ngModel" required>
+  <div class="alert alert-danger" role="alert" [hidden]="port.pristine || port.valid">Please provide a value for akka actor port.</div>
+</div>
+<div class="form-group">
+  <label for="actorName">Actor Name</label>
+  <input type="text" class="form-control" id="actorName" placeholder="Name for akka actor" (change)="onDeploymentChange()" [(ngModel)]="parentDeploymentByRole.actorName" required #actorName="ngModel">
+  <div class="alert alert-danger" role="alert" [hidden]="actorName.valid || actorName.pristine">Please enter a name for this actor.</div>
+</div>
+<div class="form-group">
+  <label for="actorSystemName">Actor System Name</label>
+  <input type="text" class="form-control" id="actorSystemName" placeholder="Actor System Name for actor" (change)="onDeploymentChange()" [(ngModel)]="parentDeploymentByRole.actorSystemName" required #actorSystemName="ngModel">
+  <div class="alert alert-danger" role="alert" [hidden]="actorSystemName.valid || actorName.pristine">Please enter the parent actor system name of this actor.</div>
+</div>

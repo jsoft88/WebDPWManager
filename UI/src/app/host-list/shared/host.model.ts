@@ -25,5 +25,5 @@ export class DeploymentsByRoles {
   actorName: string;
   port: number;
   componentId: number;
-  role: DpwRoles
+  role: DpwRoles;
 }

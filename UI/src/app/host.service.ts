@@ -4,8 +4,8 @@ import {Observable} from 'rxjs/Observable';
 import {Http, Response, Headers} from '@angular/http'
 import 'rxjs/add/operator/catch';
 import 'rxjs/add/observable/throw';
-import {AgentExecution} from "./agent-execution/shared/agent-execution.model";
-import {ConstantService} from "./constant-service.service";
+import {AgentExecution} from './agent-execution/shared/agent-execution.model';
+import {ConstantService} from './constant-service.service';
 
 @Injectable()
 export class HostService {
@@ -64,7 +64,8 @@ function toHost(r: any): Host {
 }
 
 function toDeploymentsByRoles(jsDeployments: any[]): DeploymentsByRoles[] {
-  let deployments: DeploymentsByRoles[] = [];
+  const deployments: DeploymentsByRoles[] = new Array();
+
   for (const deploy of jsDeployments) {
     deployments.push(<DeploymentsByRoles>({
       deployId: deploy.deployId,
@@ -79,7 +80,8 @@ function toDeploymentsByRoles(jsDeployments: any[]): DeploymentsByRoles[] {
 }
 
 function toExecutions(jsExecutions: any[]) {
-  let executions: AgentExecution[] = []
+  const executions: AgentExecution[] = new Array();
+
   for (const exec of jsExecutions) {
     executions.push(<AgentExecution>({
       agentExecId: exec.agentExecId,
@@ -104,9 +106,10 @@ function handleHostListRetrieveError(error: any) {
   return Observable.throw(errorMsg);
 }
 
-function handleAddHostError(error: any) {
-  const errDesc = error.message || 'Error server';
-  const errorMsg = `An error occurred while adding a new host to cluster. Description: ${ errDesc }`;
+function handleAddHostError(error: Response) {
+  if (error.status === 500) {
+    const errorMsg = `An error occurred while adding a new host to cluster. Description: ${ error.json().errors[0] }`;
 
-  return Observable.throw(errorMsg);
+    return Observable.throw(errorMsg);
+  }
 }

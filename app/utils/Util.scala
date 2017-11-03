@@ -12,7 +12,7 @@ import play.api.libs.functional.syntax._
 case class ReachPersistenceAgentWith(command: CommandWrapper)
 
 object ReadsAndWrites {
-  lazy val addressFormat: Reads[String] = Reads.StringReads.filter(JsonValidationError("Invalid IP address."))(str => str.matches("""\d{1, 3}\.\d{1, 3}\.\d{1, 3}\.d{1, 3}"""))
+  val addressFormat: Reads[String] = Reads.StringReads.filter(JsonValidationError("Invalid IP address."))(str => str.matches("""\d{1, 3}\.\d{1, 3}\.\d{1, 3}\.d{1, 3}"""))
 
   val masterTypeReads: Reads[MasterTypeUIModel] = (
     (JsPath \ "masterTypeId").read[Short] and
@@ -55,7 +55,7 @@ object ReadsAndWrites {
       (JsPath \ "port").read[Short] and
       (JsPath \ "role").read[DpwRolesUIModel] and
       (JsPath \ "componentId").read[Short]
-  )(DeploymentByRoleUIModel.apply _)
+  )(DeploymentByRoleUIModel)
 
   val dpwRolesWrites: Writes[DpwRolesUIModel] = (
     (JsPath \ "roleId").write[String] and

@@ -1,0 +1,20 @@
+<div class="row">
+  <div class="alert alert-success" role="alert" *ngIf="submitted && deployedSuccessfully">Role has been successfully deployed with ID: {{host.deployments[0].deployId}}</div>
+  <div class="alert alert-danger" role="alert" *ngIf="submitted && !deployedSuccessfully">Role could not be deployed error is: {{deploymentError}}</div>
+  <form #addDeploymentByRoleForm="ngForm" (ngSubmit)="addDeploymentSubmit(addDeploymentByRoleForm)">
+    <div class="form-group">
+      <div class="alert alert-danger" role="alert" *ngIf="errorHostListRetrieve">
+        ${{errorHostListRetrieve}}
+      </div>
+      <label for="hostId">Host</label>
+      <select id="hostId" [(ngModel)]="host">
+        <option [ngValue]="invalidHost" disabled>Choose a host</option>
+        <option *ngFor="let host of hostList" [ngValue]="host">{{host.address}}</option>
+      </select>
+    </div>
+    <app-add-deployment-form [(parentDeploymentByRole)]="deploymentByRole"></app-add-deployment-form>
+    <div class="form-group">
+      <button type="submit" class="btn btn-primary">Deploy New Role</button>
+    </div>
+  </form>
+</div>
