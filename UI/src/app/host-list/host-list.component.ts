@@ -21,12 +21,14 @@ export class HostListComponent implements OnInit {
   errorMessage = '';
   isLoading = true;
   apiEndpoint = '';
-  availableRoles: DpwRoles[];
-  selectedRoleToAssign: DpwRoles;
-  selectedIndex: number;
   selectedAgentExecution: AgentExecution;
   modalForHost: Host;
   deploys: DeploymentsByRoles[];
+  actorSystems: String[];
+  clustersRetrieveError = '';
+  roleDeploySelectedCluster = '';
+  deploymentByRole: DeploymentsByRoles;
+  deployNewRoleError = '';
 
   constructor(
     private hostService: HostService,
@@ -38,10 +40,13 @@ export class HostListComponent implements OnInit {
     private router: Router) {
 
     this.apiEndpoint = this.constants.API_ENDPOINT;
-    this.selectedIndex = -1;
-  }
+    }
 
   ngOnInit() {
+    this.getAllHosts();
+  }
+
+  private getAllHosts() {
     this.hostService.getAll().subscribe(
       hl => {
         this.retrieveDeployments(hl);
@@ -49,27 +54,14 @@ export class HostListComponent implements OnInit {
       e => this.errorMessage = e,
       () => this.isLoading = false
     );
-
-    this.dpwRolesService.getDpwRoles().subscribe(
-      rl => this.availableRoles = rl,
-      e => this.availableRoles = this.dummyDpwRole(e)
-    )
   }
 
   private dummyDpwRole(errorMessage: string): DpwRoles[] {
     const dummyR = new DpwRoles();
     dummyR.roleLabel = errorMessage;
     dummyR.roleId = 'dummy';
-    return new Array(dummyR);
-  }
 
-  modalRoleSelected(role: DpwRoles, index: number) {
-    this.selectedRoleToAssign = role;
-    if (this.selectedIndex === index) {
-      this.selectedIndex = -1;
-    } else {
-      this.selectedIndex = index;
-    }
+    return new Array(dummyR);
   }
 
   private retrieveDeployments(hosts: Host[]) {
@@ -124,7 +116,38 @@ export class HostListComponent implements OnInit {
   }
 
   onDeployRoleClicked() {
-    this.modalForHost.deployments.push()
-    this.availableRoles[this.selectedIndex]
+    const deployments: DeploymentsByRoles[] = new Array();
+    deployments.push(this.deploymentByRole);
+
+    this.modalForHost.deployments = deployments;
+    this.deploymentsByRoleService.addDeployment(this.modalForHost).subscribe(
+      response => {
+        let deployment: DeploymentsByRoles = null;
+        this.hosts
+          .filter(h => h.hostId === response.hostId)
+          .forEach(singleHost => deployment = singleHost.deployments.find(d => d.port === this.deploymentByRole.port));
+
+        if (deployment !== null) {
+          this.deploymentByRole.deployId = deployment.deployId;
+          this.hosts.filter(h => h.hostId === this.modalForHost.hostId).forEach(h => h.deployments.push(this.deploymentByRole));
+        }
+      },
+      err => this.deployNewRoleError = err
+    );
+  }
+
+  onActorSystemSelected(actorSystemName: String) {
+    if (actorSystemName === '-1') {
+      this.getAllHosts();
+      return;
+    }
+
+    this.hostService.getHostsInCluster(actorSystemName).subscribe(
+      hosts => this.retrieveDeployments(hosts),
+      err => {
+        this.errorMessage = `An error occurred while filtering by cluster: ${ err }`;
+        this.hosts = [];
+      }
+    );
   }
 }

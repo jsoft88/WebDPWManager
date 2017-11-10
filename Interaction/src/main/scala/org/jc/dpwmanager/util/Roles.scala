@@ -24,11 +24,15 @@ final object BusinessRole extends Role {
 
 final object RoleTranslator {
   def translateRole(roleId: String): Role = {
-    roleId match {
-      case ServerRole.toString => ServerRole
-      case AgentRole.toString => AgentRole
-      case PersistenceRole.toString => PersistenceRole
-      case BusinessRole.toString => BusinessRole
+
+    if (roleId.equals(ServerRole.toString)) {
+      ServerRole
+    } else if (roleId.equals(AgentRole.toString)) {
+      AgentRole
+    } else if (roleId.equals(PersistenceRole.toString)) {
+      PersistenceRole
+    } else {
+      BusinessRole
     }
   }
 }

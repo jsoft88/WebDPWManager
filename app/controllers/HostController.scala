@@ -8,7 +8,6 @@ import initialization.InitialConfiguration
 import play.api.mvc.{AbstractController, ControllerComponents, WebSocket}
 import utils.{ReachPersistenceAgentWith, ReadsAndWrites}
 import akka.pattern.ask
-import akka.stream.scaladsl.{Sink, Source}
 import akka.util.Timeout
 import org.jc.dpwmanager.commands._
 import org.jc.dpwmanager.impl.{DefaultAgentRepositoryImpl, DefaultDeploymentByRoleRepositoryImpl, DefaultDpwRolesRepositoryImpl, DefaultHostRepositoryImpl}
@@ -17,7 +16,6 @@ import org.jc.dpwmanager.util.{DeployRoleWrapper, RoleTranslator, StartRoleInHos
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
 import play.api.libs.streams.ActorFlow
-
 import scala.concurrent.{ExecutionContext, Future}
 import scala.concurrent.duration._
 
@@ -202,6 +200,29 @@ class HostController @Inject()(cc: ControllerComponents)(implicit ec: ExecutionC
         }
       }
     )
+  }
+
+  def getAllHostsInActorSystemCluster(actorSystemName: String) = Action.async { request =>
+    val dummyDeployment = DeploymentByRole(deployId = 0, actorName = "", actorSystemName = actorSystemName, hostId = 0, port = 0, componentId = 0, roleId = "")
+
+    InitialConfiguration.businessActor match {
+      case Some(r) => (r ? ReachPersistenceAgentWith(CommandWrapper(HostsPerClusterRetrieveCommand(new DefaultDeploymentByRoleRepositoryImpl(), dummyDeployment))))
+          .mapTo[HostsPerClusterRetrieveResponse].map(s => Ok(Json.toJson(s.response.map(h => HostUIModel(hostId = h.hostId, address = h.address, deployments = IndexedSeq.empty, executions = IndexedSeq.empty))))) recover {
+        case ex => InternalServerError("Could not retrieve hosts in selected cluster. Error is: " + ex.getMessage)
+      }
+      case None => Future.successful(InternalServerError(noBusinessActor))
+    }
+  }
+
+  def getAllActorSystems = Action.async { request =>
+    val dummyDeployment = DeploymentByRole(deployId = 0, actorName = "", actorSystemName = "", hostId = 0, port = 0, componentId = 0, roleId = "")
+
+    InitialConfiguration.businessActor match {
+      case Some(r) => (r ? ReachPersistenceAgentWith(CommandWrapper(ActorSystemsRetrieveCommand(new DefaultDeploymentByRoleRepositoryImpl(), dummyDeployment)))) mapTo[ActorSystemsRetrieveResponse] map(s => Ok(Json.toJson(s.response))) recover {
+        case ex => InternalServerError(ex)
+      }
+      case None => Future.successful(InternalServerError(noBusinessActor))
+    }
   }
 
   def deployNewRole() = Action(parse.json).async { request =>

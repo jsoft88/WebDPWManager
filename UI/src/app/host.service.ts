@@ -24,6 +24,26 @@ export class HostService {
     return hosts;
   }
 
+  getHostsInCluster(actorSystemName: String): Observable<Host[]> {
+    const hosts =
+      this.http
+        .get(`${ this.constantsService.API_ENDPOINT }/hosts/cluster/${ actorSystemName }`, this.getHeaders())
+        .map( response => mapHosts(response))
+        .catch(handleHostListRetrieveError);
+
+    return hosts;
+  }
+
+  getClusterSystems(): Observable<String[]> {
+    const clusters: String[] = new Array();
+    return this.http
+      .get(`${ this.constantsService.API_ENDPOINT }/hosts/clusters`, this.getHeaders())
+      .map(response => {
+        response.json().forEach(e => clusters.push(e))
+        return clusters;
+      }).catch(error => Observable.throw(error));
+  }
+
   addHost(host: Host): Observable<Host> {
     const hostResponse =
       this.http
@@ -49,7 +69,10 @@ export class HostService {
 }
 
 function mapHosts(response: Response): Host[]  {
-  return response.json().map(toHost);
+  const hosts: Host[] = new Array();
+  response.json().forEach(h => hosts.push(toHost(h)));
+
+  return hosts;
 }
 
 function toHost(r: any): Host {

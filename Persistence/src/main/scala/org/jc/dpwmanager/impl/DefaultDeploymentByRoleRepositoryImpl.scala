@@ -43,6 +43,8 @@ class DefaultDeploymentByRoleRepositoryImpl(implicit ec: ExecutionContext) exten
         (dbr, h) <- deploymentsByRoles join hosts on (_.hostId === _.hostId)
       } yield h
 
-    db.run(query)
+    db.run(query.result)
   }
+
+  override def getActorSystems() = db.run(deploymentsByRoles.map(_.actorSystemName).distinct.result)
 }

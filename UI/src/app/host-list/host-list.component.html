@@ -32,13 +32,8 @@
         <h4>Deploy New Role on Host</h4>
       </div>
       <div class="modal-body">
-        <p>This will deploy a new role ({{availableRoles.join(', ')}}) on the selected host. Depending on the type of
-        role being deployed, a new type master could be later assigned to it.</p>
-        <p *ngFor="let role of availableRoles; let idx = index">
-          <span *ngIf="idx % 3 == 0"><button type="button" [ngClass]="{'btn btn-primary': true, 'active': selectedIndex === idx}" (click)="modalRoleSelected(role, idx)">{{role.roleLabel}}</button></span>
-          <span *ngIf="idx % 3 == 1"><button type="button" [ngClass]="{'btn btn-warning': true, 'active': selectedIndex === idx}" (click)="modalRoleSelected(role, idx)">{{role.roleLabel}}</button> </span>
-          <span *ngIf="idx % 3 == 2"><button type="button" [ngClass]="{'btn btn-critical': true, 'active': selectedIndex === idx}" (click)="modalRoleSelected(role, idx)">{{role.roleLabel}}</button> </span>
-        </p>
+        <div class="alert alert-danger" *ngIf="deployNewRoleError">{{deployNewRoleError}}</div>
+        <app-add-deployment-form [(parentDeploymentByRole)]="deploymentByRole"></app-add-deployment-form>
       </div>
       <div class="modal-footer">
         <button *ngIf="selectedIndex >= 0" type="button" class="btn btn-primary" data-dismiss="modal" (click)="onDeployRoleClicked()">Deploy Selected Role</button>
@@ -48,16 +43,24 @@
   </div>
 </div>
 <div class="row">
+  <div class="col-xs-2"></div>
+  <div class="col-xs-8">
+    <hr/>
+  </div>
+  <div class="col-xs-2"></div>
+</div>
+<div class="row">
   <div class="col-xs-4">
-    Choose an actor system (cluster):
+    Filter by actor system (cluster):
   </div>
   <div class="col-xs-4">
-    <select id="chooseCluster" *ngFor="let deploy of ">
-
+    <select id="chooseCluster" (change)="onActorSystemSelected($event.value)">
+      <option [value]="-1">No Filter</option>
+      <option *ngFor="let actorSystemName of actorSystems" [value]="actorSystemName">{{ actorSystemName }}</option>
     </select>
   </div>
 </div>
-<div class="row">
+<div class="row" *ngIf="errorMessage == ''">
   <div class="col-sm-12" *ngFor="let host of hosts">
     <div class="thumbnail">
       <img src="" alt="Host {{host.address}}">
@@ -78,5 +81,10 @@
         <p><a href="#" class="btn btn-primary" data-target=".add-master-modal" (click)="onNewRoleClick(host)">Deploy New Role</a></p>
       </div>
     </div>
+  </div>
+</div>
+<div class="row" *ngIf="errorMessage">
+  <div class="col-xs-12">
+    <div class="alert alert-danger" role="alert">{{errorMessage}}</div>
   </div>
 </div>

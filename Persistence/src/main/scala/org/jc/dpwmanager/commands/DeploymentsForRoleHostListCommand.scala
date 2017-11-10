@@ -3,7 +3,9 @@ package org.jc.dpwmanager.commands
 import org.jc.dpwmanager.models.{DeploymentByRole, DpwRoles}
 import org.jc.dpwmanager.repository.DeploymentByRoleRepository
 
-case class DeploymentsForRoleHostListCommand(repository: DeploymentByRoleRepository, entity: DeploymentByRole) extends Command[Int, DeploymentByRole, DeploymentsForRoleHostListResponse](repository, entity){
+import scala.concurrent.ExecutionContext
+
+case class DeploymentsForRoleHostListCommand(repository: DeploymentByRoleRepository, entity: DeploymentByRole)(implicit ec: ExecutionContext) extends Command[Int, DeploymentByRole, DeploymentsForRoleHostListResponse](repository, entity){
   override def execute = {
     val dummyDpwRole = DpwRoles(roleId = entity.roleId, roleDescription = "", roleLabel = "")
     repository.getAllDeploymentsForRole(dummyDpwRole).map(DeploymentsForRoleHostListResponse(_)) recover {

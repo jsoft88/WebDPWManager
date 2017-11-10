@@ -3,7 +3,9 @@ package org.jc.dpwmanager.commands
 import org.jc.dpwmanager.models.MasterType
 import org.jc.dpwmanager.repository.MasterTypeRepository
 
-case class SingleMasterTypeRetrieveCommand(repository: MasterTypeRepository, entity: MasterType) extends Command[Short, MasterType, SingleMasterTypeRetrieveResponse](repository, entity){
+import scala.concurrent.ExecutionContext
+
+case class SingleMasterTypeRetrieveCommand(repository: MasterTypeRepository, entity: MasterType)(implicit ec: ExecutionContext) extends Command[Short, MasterType, SingleMasterTypeRetrieveResponse](repository, entity){
   override def execute = {
     val notFound = MasterType(label = "Not found", masterTypeId = 0)
 

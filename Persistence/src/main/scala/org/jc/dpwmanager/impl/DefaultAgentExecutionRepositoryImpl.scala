@@ -28,7 +28,7 @@ class DefaultAgentExecutionRepositoryImpl(implicit ec: ExecutionContext) extends
 
   @Deprecated
   override def getUnstoppedMasterForAgent(agentId: Short): Future[Seq[AgentExecution]] = {
-    val q = agentExecutionTable.filter((aet => !aet.cleanStop && aet.agentId === agentId))
+    val q = agentExecutionTable.filter(aet => (!aet.cleanStop && aet.deployId === agentId.asInstanceOf[Int]))
     db.run(q.result)
   }
 
@@ -45,7 +45,9 @@ class DefaultAgentExecutionRepositoryImpl(implicit ec: ExecutionContext) extends
 
   override def get(id: Int): Future[Option[AgentExecution]] = db.run(agentExecutionTable.filter(_.agentExecId === id).result headOption)
 
-  override def getAllMastersForAgent(agentId: Short): Future[Seq[AgentExecution]] = db.run(agentExecutionTable.filter(_.agentId === agentId).result)
+  override def getAllMastersForAgent(agentId: Short): Future[Seq[AgentExecution]] = db.run(agentExecutionTable.filter(ae => ae.deployId === agentId.asInstanceOf[Int]).result)
 
   override def getAllMastersOnDeployment(deployId: Int) = db.run(agentExecutionTable.filter(aet => !aet.cleanStop && aet.deployId === deployId).result)
+
+  override def getUnstoppedMasterForAgent(deployId: Int) = db.run(agentExecutionTable.filter(aet => aet.deployId === deployId).result)
 }

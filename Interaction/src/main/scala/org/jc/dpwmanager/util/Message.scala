@@ -20,7 +20,7 @@ final case class DeployMasterFailed(reason: String)
 
 final case class DeployRoleWrapper(actorName: String, actorSystemName: String, address: String, port: Short, role: Role)
 
-final case class MessageWrapper(deployId: Int, actorName: Option[String], masterTypeId: Short, execArgs: IExecutable)
+final case class MessageWrapper(deployId: Int, actorName: Option[String], masterTypeId: Short, execArgs: IExecutable, address: String, port: Short)
 
 final case class StopMaster(msgWrapper: MessageWrapper)
 

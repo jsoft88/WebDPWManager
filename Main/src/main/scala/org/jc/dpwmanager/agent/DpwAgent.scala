@@ -33,11 +33,11 @@ object DpwAgent {
       .withFallback(ConfigFactory.load())
 
     val system = ActorSystem(actorSystemName, config = config)
-    system.actorOf(Props(new Agent(persistenceClusterSeedNodes.split(","), persistenceActorName, actorSystemName)), actorName)
+    system.actorOf(Props[Agent], actorName)
   }
 }
 
-class Agent(persistenceClusterSeedNodes: Array[String], persistenceActorName: String, actorSystemName: String) extends Actor {
+class Agent extends Actor {
 
   val cluster = Cluster(context.system)
 
@@ -56,42 +56,20 @@ class Agent(persistenceClusterSeedNodes: Array[String], persistenceActorName: St
   override def receive: Receive = {
     case PersistenceActorsInformation(paths) => paths map { entry => persistenceActors :+ context.actorSelection(RootActorPath(entry._2) + "/user/" + entry._1)}
 
-    case DeployMasterStart(msgWrapper) => {
-      persistenceActors headOption match {
-        case Some(pa) => {
-          Try {
-            val process = Process(msgWrapper.execArgs.commandToString())
-            procHandler = Some(process.run())
-          } match {
-            case Success(_) => {
-              agentExecution = Some(AgentExecution(agentExecId = 0, command = msgWrapper.execArgs.commandToString(), cleanStop = false, executionTimestamp = System.currentTimeMillis(), agentId = agentId, masterTypeId = 0))
-              pa ? AgentExecutionInsertCommand onComplete {
-                case Success(a: AgentExecution) => {
-                  agentExecution = Some(a)
-                  sender() ! DeployMasterCompleted(msgWrapper)
-                }
-                case Failure(ex) => {
-                  procHandler match { case Some(p) => p.destroy() case None => }
-                  sender() ! Status.Failure(new Exception("Failed to deploy master in host: " + ex.getMessage))
-                }
-              }
-            }
-            case Failure(ex) => Status.Failure(new Exception("Failed to deploy master in host: " + ex.getMessage))
-          }
-        }
-        case None => sender() ! Status.Failure(new Exception("No persistence agents are available."))
+    case DeployMasterStart(messageWrapper) => {
+      Try {
+        val process = Process(messageWrapper.execArgs.commandToString())
+        procHandler = Some(process.run())
+      } match {
+        case Success(_) => sender ! DeployMasterCompleted(messageWrapper)
+        case Failure(ex) => sender ! Status.Failure(new Exception("Failed to start master in selected host. Exception was: " + ex.getMessage))
       }
     }
+
     case StopMaster(msgWrapper) => {
       procHandler match {
         case Some(p) => p.destroy()
         case None =>
-      }
-      persistenceActors headOption match {
-        case Some(pa) => pa ? MarkMasterExecutionAsCleanStop(new DefaultAgentExecutionRepositoryImpl, agentExecution.get) onComplete {
-          case Success(_) => sender() ! MasterStopped(msgWrapper)
-          case Failure(_) => self ! StopMaster(msgWrapper)
-        }
       }
     }
 
@@ -127,16 +105,5 @@ class Agent(persistenceClusterSeedNodes: Array[String], persistenceActorName: St
 
   override def preStart(): Unit = {
     cluster.subscribe(self, classOf[MemberEvent])
-    //block on preStart to retrieve persistence actors, if none found, fail
-
-    persistenceActors headOption match {
-      case Some(pa) => {
-        pa ? AgentInsertCommand(new DefaultAgentRepositoryImpl, Agent(port = self.path.address.port.get, host = self.path.address.host.get, agentId = 0, actorName = self.path.name, actorSystemName = actorSystemName)) onComplete {
-          case Success(a: models.Agent) => agentId = a.agentId
-          case Failure(_) => context.stop(self)
-        }
-      }
-      case None => context.stop(self)
-    }
   }
 }

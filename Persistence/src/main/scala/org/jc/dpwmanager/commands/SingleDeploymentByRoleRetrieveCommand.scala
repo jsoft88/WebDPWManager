@@ -3,7 +3,9 @@ package org.jc.dpwmanager.commands
 import org.jc.dpwmanager.models.DeploymentByRole
 import org.jc.dpwmanager.repository.DeploymentByRoleRepository
 
-case class SingleDeploymentByRoleRetrieveCommand(repository: DeploymentByRoleRepository, entity: DeploymentByRole) extends Command[Int, DeploymentByRole, SingleDeploymentByRoleRetrieveResponse](repository, entity){
+import scala.concurrent.ExecutionContext
+
+case class SingleDeploymentByRoleRetrieveCommand(repository: DeploymentByRoleRepository, entity: DeploymentByRole)(implicit ec: ExecutionContext) extends Command[Int, DeploymentByRole, SingleDeploymentByRoleRetrieveResponse](repository, entity){
   override def execute = {
     repository.get(entity.deployId).map(SingleDeploymentByRoleRetrieveResponse(_)).recover {
       case ex => throw new Exception(this.toString + ". Failed with: " + ex.getMessage)

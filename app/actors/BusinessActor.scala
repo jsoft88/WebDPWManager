@@ -1,22 +1,24 @@
 package actors
 
-import scala.util.Success
-import akka.actor.{Actor, ActorNotFound, ActorRef, Address, Deploy, Props, RootActorPath, Status, Terminated}
+import akka.actor.{Actor, ActorRef, Address, Deploy, Props, RootActorPath, Status, Terminated}
 import akka.cluster.ClusterEvent.CurrentClusterState
 import akka.util.Timeout
 import utils.{BusinessMessage, BusinessRegisterFlowActor, ReachPersistenceAgentWith}
 import akka.pattern.ask
 import akka.remote.RemoteScope
-import akka.remote.WireFormats.RemoteScope
 import com.google.inject.Inject
-import initialization.InitialConfiguration
 import org.jc.dpwmanager.actors.DBManager
+import org.jc.dpwmanager.commands
+import org.jc.dpwmanager.commands._
+import org.jc.dpwmanager.impl.{DefaultDeploymentByRoleRepositoryImpl, DefaultHostRepositoryImpl}
+import org.jc.dpwmanager.models.{DeploymentByRole, Host}
 import org.jc.dpwmanager.util._
 import play.api.Configuration
+import akka.pattern.ask
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
-import scala.util.Failure
+import scala.util.{Failure, Success}
 
 /**
   * Created by jorge on 20/7/2017.
@@ -33,24 +35,57 @@ class BusinessActor @Inject() (configuration: Configuration) extends Actor {
   var serverActors: IndexedSeq[ActorRef] = IndexedSeq.empty[ActorRef]
   var notificationActors: IndexedSeq[ActorRef] = IndexedSeq.empty[ActorRef]
 
+  var deploymentByRole: DeploymentByRole = DeploymentByRole(deployId =  0, hostId = 0, actorName = "", actorSystemName = "", port = 0, componentId = 0, roleId = "")
+
   implicit lazy val askTimeout = Timeout(60 seconds)
 
   implicit val ec: ExecutionContext = context.dispatcher
+
+  def registerSelfAtDB(host: Host): Unit = {
+    deploymentByRole = DeploymentByRole(
+      deployId = 0,
+      actorName = self.path.name,
+      hostId = host.hostId,
+      roleId = BusinessRole.toString,
+      actorSystemName = self.path.address.system,
+      componentId = 0,
+      port = self.path.address.port.get.asInstanceOf[Short])
+
+    ((persistenceActors head) ? CommandWrapper(DeploymentInsertCommand(new DefaultDeploymentByRoleRepositoryImpl(), deploymentByRole))).mapTo[DeploymentInsertResponse].onComplete {
+      case Success(d) => deploymentByRole = deploymentByRole.copy(deployId = d.response.deployId, componentId = d.response.componentId)
+      case Failure(_) =>
+    }
+  }
 
   override def receive: Receive = {
 
     case StartRoleInHost(deployWrapper) if (deployWrapper.role.toString.equals(PersistenceRole.toString)) => {
       val address = Address("akka.tcp", deployWrapper.actorSystemName, deployWrapper.address, deployWrapper.port)
-      val perRef = context.system.actorOf(Props[DBManager].withDeploy(Deploy(scope = RemoteScope(address))))
+      val perRef = context.system.actorOf(Props[DBManager].withDeploy(Deploy(scope = RemoteScope(address))), deployWrapper.actorName)
       context.watch(perRef)
       persistenceActors :+ perRef
+
+      if (persistenceActors.length == 1) {
+        //register this deployment only the first time a persistence role is deployed.
+        ((persistenceActors head) ? commands.CommandWrapper(HostListRetrieveCommand(new DefaultHostRepositoryImpl(), Host(hostId = 0, address = "")))).mapTo[HostListRetrieveResponse] onComplete {
+          case Success(hl) => hl.response.filter(_.address == self.path.address.host.get) headOption match {
+            case Some(host) => registerSelfAtDB(host)
+            case None => {
+              ((persistenceActors head) ? CommandWrapper(HostInsertCommand(new DefaultHostRepositoryImpl(), Host(hostId = 0, address = self.path.address.host.get)))).mapTo[HostInsertResponse].onComplete {
+                case Success(response) => registerSelfAtDB(response.response)
+                case Failure(_) =>
+              }
+            }
+          }
+        }
+      }
     }
 
-    //case Terminated(actor) => if (persistenceActors.filterNot(_.path == actor.path).length == 0) notificationActors foreach (_ ! "There are no persistence agents in this cluster, please add at least one or subsequent requests will fail.")
+    case Terminated(actor) if (persistenceActors.filter(_.path == actor.path).headOption != None) => notificationActors foreach (_ ! "There are no persistence agents in this cluster, please add at least one or subsequent requests will fail.")
 
     case StartRoleInHost(deployWrapper) if (deployWrapper.role.toString.equals(ServerRole.toString) && persistenceActors.nonEmpty) => {
       val address = Address("akka.tcp", deployWrapper.actorSystemName, deployWrapper.address, deployWrapper.port)
-      val serRef = context.system.actorOf(Props[DBManager].withDeploy(Deploy(scope = RemoteScope(address))))
+      val serRef = context.system.actorOf(Props[DBManager].withDeploy(Deploy(scope = RemoteScope(address))), deployWrapper.actorName)
       serverActors :+ serRef
       serRef ! PersistenceActorsInformation(persistenceActors map {r => (r.path.name, r.path.address) } toMap)
     }
@@ -63,16 +98,16 @@ class BusinessActor @Inject() (configuration: Configuration) extends Actor {
 
       saIndex = (saIndex + 1) % serverActors.length
 
-      (serverActors(saIndex) ? StartRoleInHost(deployWrapper)) map _
+      serverActors(saIndex) ? StartRoleInHost(deployWrapper)
     }
 
-    case ReachPersistenceAgentWith(command) if (persistenceActors.nonEmpty) => (persistenceActors((paIndex + 1) % persistenceActors.length) ? command) map _
+    case ReachPersistenceAgentWith(command) if (persistenceActors.nonEmpty) => (persistenceActors((paIndex + 1) % persistenceActors.length) ? command)
 
     case StartRoleFailed(reason, role) if (role.equals(BusinessRole.toString)) =>
 
     case DeployMasterStart(_) if serverActors.isEmpty => self ! DeployMasterFailed("No servers enabled to handle master deploy request")
 
-    case DeployMasterStart(messageWrapper) => serverActors((saIndex + 1) % serverActors.length) ? DeployMasterStart(messageWrapper) map _
+    case DeployMasterStart(messageWrapper) => serverActors((saIndex + 1) % serverActors.length) ? DeployMasterStart(messageWrapper)
 
     case state: CurrentClusterState => {
       for (m <- state.members) {
@@ -96,6 +131,17 @@ class BusinessActor @Inject() (configuration: Configuration) extends Actor {
 
   override def preStart(): Unit = {
 
+  }
+
+  override def postStop(): Unit = {
+    this.persistenceActors headOption match {
+      case Some(pa) => {
+        (pa ? CommandWrapper(DeploymentByRoleRemoveCommand(new DefaultDeploymentByRoleRepositoryImpl(), deploymentByRole))).mapTo[DeploymentByRoleRemoveResponse].onComplete {
+          case Failure(ex) => println("Failed to remove deployment of Business actor from DB: " + ex.getMessage)
+        }
+      }
+      case None => println("Stopping Business actor but there are no persistence actors available to remove deployment from db")
+    }
   }
 }
 

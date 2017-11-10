@@ -15,9 +15,19 @@ export class AddDeploymentFormComponent implements OnInit {
   @Input() parentDeploymentByRole: DeploymentsByRoles;
   @Output() deploymentChangeEmitter = new EventEmitter();
 
+  actorSystems: String[];
+  clustersRetrieveError = '';
+
+  selectedActorSystem = '-1';
+
+  addingActorSystem = false;
+
   constructor(private hostService: HostService) { }
 
   ngOnInit() {
+    this.hostService.getClusterSystems().subscribe(
+      actorSystems => this.actorSystems = actorSystems,
+      err => this.clustersRetrieveError = err);
   }
 
   onDeploymentChange() {
@@ -32,5 +42,11 @@ export class AddDeploymentFormComponent implements OnInit {
       this.parentDeploymentByRole.role = role;
     }
     this.deploymentChangeEmitter.emit(this.parentDeploymentByRole);
+  }
+
+  onActorSystemSelected(actorSystemName: string) {
+    this.addingActorSystem = (actorSystemName === '-1');
+    this.parentDeploymentByRole.actorSystemName = actorSystemName;
+    this.onDeploymentChange();
   }
 }

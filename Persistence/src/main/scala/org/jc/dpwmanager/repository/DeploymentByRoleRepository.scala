@@ -13,4 +13,6 @@ trait DeploymentByRoleRepository extends BaseRepository[Int, DeploymentByRole]{
   def getAllDeploymentsInHost(host: Host): Future[Seq[DeploymentByRole]]
 
   def getActorSystemHosts(actorSystemName: String): Future[Seq[Host]]
+
+  def getActorSystems(): Future[Seq[String]]
 }

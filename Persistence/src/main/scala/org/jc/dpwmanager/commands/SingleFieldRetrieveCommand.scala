@@ -3,7 +3,9 @@ package org.jc.dpwmanager.commands
 import org.jc.dpwmanager.models.MasterField
 import org.jc.dpwmanager.repository.MasterFieldRepository
 
-case class SingleFieldRetrieveCommand(repository: MasterFieldRepository, entity: MasterField) extends Command[Int, MasterField, SingleFieldRetrieveResponse](repository, entity){
+import scala.concurrent.ExecutionContext
+
+case class SingleFieldRetrieveCommand(repository: MasterFieldRepository, entity: MasterField)(implicit ec: ExecutionContext) extends Command[Int, MasterField, SingleFieldRetrieveResponse](repository, entity){
   override def execute = {
     val dummyField = MasterField(fieldId = 0, fieldName = "Not Found", javaTypePattern = "", fieldDescription = "Master field not found")
     repository.get(entity.fieldId).map(r => SingleFieldRetrieveResponse(r match { case Some(f) => f case None => dummyField})).recover {

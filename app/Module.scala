@@ -1,10 +1,8 @@
 import com.google.inject.AbstractModule
 import java.time.Clock
-
 import actors.BusinessActor
 import play.api.{Configuration, Environment}
 import play.api.libs.concurrent.AkkaGuiceSupport
-import play.engineio.EngineIOController
 import services.{ApplicationTimer, AtomicCounter, Counter}
 
 /**

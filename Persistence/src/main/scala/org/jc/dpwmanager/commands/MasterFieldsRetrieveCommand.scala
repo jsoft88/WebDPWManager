@@ -3,7 +3,9 @@ package org.jc.dpwmanager.commands
 import org.jc.dpwmanager.models.{MasterField, MasterTypeHasFields}
 import org.jc.dpwmanager.repository.MasterTypeHasFieldsRepository
 
-case class MasterFieldsRetrieveCommandAsc(repository: MasterTypeHasFieldsRepository, entity: MasterTypeHasFields) extends Command[Int, MasterTypeHasFields, MasterFieldsRetrieveResponse](repository, entity){
+import scala.concurrent.ExecutionContext
+
+case class MasterFieldsRetrieveCommandAsc(repository: MasterTypeHasFieldsRepository, entity: MasterTypeHasFields)(implicit ec: ExecutionContext) extends Command[Int, MasterTypeHasFields, MasterFieldsRetrieveResponse](repository, entity){
   override def execute = {
     repository.getFieldsForMaster(entity.masterTypeId, true).map(s => MasterFieldsRetrieveResponse(s)) recover {
       case ex => throw new Exception(ex.getMessage)
@@ -11,7 +13,7 @@ case class MasterFieldsRetrieveCommandAsc(repository: MasterTypeHasFieldsReposit
   }
 }
 
-case class MasterFieldsRetrieveCommandDesc(repository: MasterTypeHasFieldsRepository, entity: MasterTypeHasFields) extends Command[Int, MasterTypeHasFields, MasterFieldsRetrieveResponse](repository, entity){
+case class MasterFieldsRetrieveCommandDesc(repository: MasterTypeHasFieldsRepository, entity: MasterTypeHasFields)(implicit ec: ExecutionContext) extends Command[Int, MasterTypeHasFields, MasterFieldsRetrieveResponse](repository, entity){
   override def execute = {
     repository.getFieldsForMaster(entity.masterTypeId, false).map(s => MasterFieldsRetrieveResponse(s)) recover {
       case ex => throw new Exception(ex.getMessage)

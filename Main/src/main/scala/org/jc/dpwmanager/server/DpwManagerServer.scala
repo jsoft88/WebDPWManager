@@ -2,18 +2,17 @@ package org.jc.dpwmanager.server
 
 import akka.actor.{Actor, ActorRef, ActorSystem, Address, Deploy, Props, RootActorPath, Status, Terminated}
 import akka.cluster.Cluster
-import akka.cluster.ClusterEvent.{CurrentClusterState, MemberEvent, MemberUp}
-import akka.cluster.protobuf.msg.ClusterMessages.MemberStatus
+import akka.cluster.ClusterEvent.{CurrentClusterState, MemberEvent}
 import akka.util.Timeout
 import com.typesafe.config.ConfigFactory
-import org.jc.dpwmanager.impl.{DefaultAgentRepositoryImpl, DefaultDeploymentByRoleRepositoryImpl, DefaultDpwRoleConstraintRepositoryImpl, DefaultHostRepositoryImpl}
+import org.jc.dpwmanager.impl._
 import org.jc.dpwmanager.util._
 import org.slf4j.LoggerFactory
 import akka.pattern.ask
 import akka.remote.RemoteScope
 import org.jc.dpwmanager.agent
 import org.jc.dpwmanager.commands._
-import org.jc.dpwmanager.models.{Agent, DeploymentByRole, DpwRoleConstraint, Host}
+import org.jc.dpwmanager.models._
 
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration._
@@ -22,13 +21,13 @@ import scala.util.{Failure, Success}
 /**
   * Created by jorge on 8/6/2017.
   */
-class DpwManagerServer(persistenceClusterSeedNodes: Array[String], persistenceActorName: String) extends Actor {
+class DpwManagerServer extends Actor {
 
   val logger = LoggerFactory.getLogger(this.getClass)
   var agents: IndexedSeq[ActorRef] = IndexedSeq.empty[ActorRef]
   var persistenceActors: IndexedSeq[ActorRef] = IndexedSeq.empty[ActorRef]
   val cluster = Cluster(context.system)
-  var paIndex = 0
+  var paIndex = -1
   implicit val timeout = Timeout(60 seconds)
 
   implicit val ec: ExecutionContext = context.dispatcher
@@ -42,68 +41,77 @@ class DpwManagerServer(persistenceClusterSeedNodes: Array[String], persistenceAc
 
     case StartRoleInHost(deployWrapper) => {
       val address = Address("akka.tcp", deployWrapper.actorSystemName, deployWrapper.address, deployWrapper.port)
-      val actorRef = context.system.actorOf(Props[agent.Agent].withDeploy(Deploy(scope = RemoteScope(address))))
+      val actorRef = context.system.actorOf(Props[agent.Agent].withDeploy(Deploy(scope = RemoteScope(address))), deployWrapper.actorName)
 
       actorRef ! PersistenceActorsInformation(persistenceActors map { r => (r.path.name, r.path.address)} toMap)
       sender ! StartRoleSuccess(deployWrapper)
+
+      agents :+ actorRef
     }
 
-    case DeployMasterStart(messageWrapper) if (persistenceActors.nonEmpty) => {
-      val dummyDeployByRole = DeploymentByRole(deployId = messageWrapper.deployId, actorName = "", actorSystemName = "", port = 0, componentId = 0, roleId = "", hostId = 0)
-      (persistenceActors(paIndex) ? SingleDeploymentByRoleRetrieveCommand(new DefaultDeploymentByRoleRepositoryImpl(), dummyDeployByRole)).mapTo[SingleDeploymentByRoleRetrieveResponse]
-        .onComplete {
-          case Success(r) => r.response match {
+    case DeployMasterStart(messageWrapper) if persistenceActors.isEmpty => sender ! Status.Failure(new Exception("There are no agents available for executing task."))
+
+    case DeployMasterStart(messageWrapper) => {
+      (persistenceActors(paIndex) ? CommandWrapper(SingleDeploymentByRoleRetrieveCommand(
+        new DefaultDeploymentByRoleRepositoryImpl(),
+        DeploymentByRole(deployId = messageWrapper.deployId, hostId = 0, actorName = "", actorSystemName = "", roleId = "", componentId = 0, port = 0))
+      )).mapTo[SingleDeploymentByRoleRetrieveResponse].onComplete {
+        case Failure(ex) => sender ! Status.Failure(new Exception("Could not retrieve the given role deployment: " + ex.getMessage))
+        case Success(deployment) => {
+          deployment.response match {
             case Some(d) => {
-              (persistenceActors(paIndex) ? HostListRetrieveCommand(new DefaultHostRepositoryImpl(), Host(hostId = d.hostId, address = ""))).mapTo[HostListRetrieveResponse]
-                .onComplete {
-                  case Success(res) => {
-                    val host = res.response.filter(_.hostId == d.deployId).headOption
-                    host match {
-                      case Some(h) => {
-                        (persistenceActors(paIndex) ? ConstraintForRoleRetrieveCommand(new DefaultDpwRoleConstraintRepositoryImpl(), DpwRoleConstraint(constraintId = 0, roleId = d.roleId, canExecute = false)))
-                          .mapTo[ConstraintForRoleRetrieveResponse].onComplete {
-                          case Success(constraintResponse) => {
-                            if (constraintResponse.response) {
-                              (context.actorSelection(RootActorPath(Address("akka.tcp", d.actorSystemName, h.address, d.port)) + "/user/" + d.actorName) ? DeployMasterStart(messageWrapper)) onComplete {
-                                case Success(_) => sender ! _
-                                case Failure(ex) => sender ! Status.Failure(ex)
+              //get role constraints
+              (persistenceActors(paIndex) ? CommandWrapper(ConstraintForRoleRetrieveCommand(new DefaultDpwRoleConstraintRepositoryImpl(), DpwRoleConstraint(roleId = d.roleId, canExecute = false, constraintId = 0))))
+                .mapTo[ConstraintForRoleRetrieveResponse].onComplete {
+                case Success(canExecute) => {
+                  if (canExecute.response) {
+                    val dummyAgentExec = AgentExecution(agentExecId = 0, command = messageWrapper.execArgs.commandToString(), cleanStop = false, System.currentTimeMillis(), deployId = messageWrapper.deployId, masterTypeId = messageWrapper.masterTypeId)
+                    (persistenceActors(paIndex) ? CommandWrapper(
+                      AgentExecutionInsertCommand(
+                        new DefaultAgentExecutionRepositoryImpl(), dummyAgentExec)))
+                      .mapTo[AgentExecutionInsertResponse]
+                      .onComplete {
+                        case Failure(ex) => sender ! Status.Failure(new Exception("Registering started master failed. A shutdown request has been sent to agent: " + ex.getMessage))
+                        case Success(response) => {
+                          agents.filter(a => a.path.address.host == messageWrapper.address && a.path.address.port.asInstanceOf[Short] == messageWrapper.port) headOption match {
+                            case Some(ref) => (ref ? DeployMasterStart(messageWrapper)) onComplete {
+                              case Success(_) => sender ! DeployMasterCompleted(messageWrapper)
+                              case Failure(ex) => {
+                                //remove execution from db
+                                (persistenceActors(paIndex) ? CommandWrapper(MarkMasterExecutionAsCleanStop(new DefaultAgentExecutionRepositoryImpl(), dummyAgentExec.copy(agentExecId =  response.response.agentExecId)))) onComplete {
+                                  case Success(_) => sender ! Status.Failure(new Exception("Delegating execution to agent failed, but DB state has been successfully restored. Exception was: " + ex.getMessage))
+                                  case Failure(cmdEx) => sender ! Status.Failure(new Exception("Delegating execution to agent failed, and DB state could not be restored. Even though it might show like process is running, that is not the case. Exception was: " + cmdEx.getMessage))
+                                }
                               }
-                            } else {
-                              sender ! Status.Failure(new Exception("This role is not allowed to execute!"))
                             }
                           }
-                          case Failure(ex) => sender ! Status.Failure(ex)
                         }
                       }
-                      case None => sender ! Status.Failure(new Exception("The host is not currently registered in cluster."))
-                    }
+                  } else {
+                    sender ! Status.Failure(new Exception("This role is not authorized to execute any processes. Change its role to one that is allowed to do so."))
                   }
-                  case Failure(ex) => sender ! Status.Failure(ex)
                 }
+                case Failure(ex) => sender ! Status.Failure(new Exception("It was not possible to read if the role has permission to execute processes: " + ex.getMessage))
+              }
             }
-            case None => sender ! Status.Failure(new Exception("No role has been deployed in host."))
+            case None => sender ! Status.Failure(new Exception("Make sure to deploy a role first before trying to run a process."))
           }
-          case Failure(ex) => sender ! Status.Failure(ex)
+        }
       }
     }
 
-    case DeployMasterStart if persistenceActors.isEmpty => sender ! Status.Failure(new Exception("There are no agents available for executing task."))
-    case DeployMasterStart(messageWrapper) => {
-      (agents filter(_.path.name.equals(messageWrapper.actorName)) headOption) match {
-        case Some(a) => a ? DeployMasterStart(messageWrapper) onComplete {
-          case Success(messageWrapper: MessageWrapper) => persistenceActors.headOption match {
-            case Some(pa) => pa ? AgentInsertCommand(new DefaultAgentRepositoryImpl, Agent(port = a.path.address.port.get, host = a.path.address.host.get, agentId = 0, actorSystemName = context.system.name, actorName = a.path.name)) onComplete {
-              case Success(_) => sender ! DeployMasterCompleted(messageWrapper)
-              case Failure(ex) => {
-                sender ! DeployMasterFailed("Registering started master failed. A shutdown request has been sent to agent: " + ex.getMessage)
-                a ! StopMaster(messageWrapper)
-              }
-            }
-            case None => a ! StopMaster(messageWrapper.asInstanceOf[MessageWrapper])
+    case StopMaster(messageWrapper) if (agents.isEmpty || persistenceActors.isEmpty) => sender ! Status.Failure(new Exception("There are deployed roles in cluster. No master could be stopped."))
+    case StopMaster(messageWrapper) => {
+      val dummyAgentExec = AgentExecution(agentExecId = 0, command = messageWrapper.execArgs.commandToString(), cleanStop = false, System.currentTimeMillis(), deployId = messageWrapper.deployId, masterTypeId = messageWrapper.masterTypeId)
+      agents.filter(a => a.path.address.host == messageWrapper.address && a.path.address.port == messageWrapper.port) headOption match {
+        case Some(ref) => ref ? StopMaster(messageWrapper) onComplete {
+          case Success(_) => persistenceActors(paIndex) ? CommandWrapper(MarkMasterExecutionAsCleanStop(new DefaultAgentExecutionRepositoryImpl(), dummyAgentExec)) onComplete {
+            case Success(_) => sender ! MasterStopped(messageWrapper)
+            case Failure(ex) => sender ! Status.Failure(new Exception("Failed to stop master because DB state couldn't be restored, that is, mark process as stopped: " + ex.getMessage))
           }
-          case Failure(ex) => sender() ! DeployMasterFailed(ex.getMessage)
+          case Failure(ex) => sender ! Status.Failure(new Exception("Failed to stop running process in agent: " + ex.getMessage))
         }
-        case None => sender() ! DeployMasterFailed("Selected agent does not exist")
+        case None => sender ! Status.Failure(new Exception("The agent where the process is running does not exist."))
       }
     }
     case AgentRegistration if !agents.contains(sender()) =>
@@ -114,23 +122,11 @@ class DpwManagerServer(persistenceClusterSeedNodes: Array[String], persistenceAc
       for (m <- state.members) {
         if (m.status == akka.cluster.MemberStatus.up && m.hasRole(PersistenceRole.toString)) persistenceActors :+ context.actorSelection(RootActorPath(m.address) + "/user/" + PersistenceRole.toString)
         else if (m.status == akka.cluster.MemberStatus.exiting && m.hasRole(PersistenceRole.toString)) persistenceActors.diff(state.members.filter(m => (m.status == akka.cluster.MemberStatus.exiting && m.hasRole(PersistenceRole.toString))).map(m => context.actorSelection(RootActorPath(m.address) + "/user/" + PersistenceRole.toString)).toSeq)
-        else if (m.status == akka.cluster.MemberStatus.up && m.hasRole(BusinessRole.toString)) {
-          persistenceActors.foreach(r => context.actorSelection(RootActorPath(m.address) + "/user/" + BusinessRole.toString) resolveOne(30 seconds) onComplete {
-            case Success(r) => r ! PersistenceActorsInformation(persistenceActors.map(pa => RootActorPath(pa.path.address) + "/user/" + PersistenceRole.toString).toArray)
-            case Failure(_) =>
-          })
-          context.actorSelection(RootActorPath(m.address) + "/user/" + BusinessRole.toString) resolveOne(30 seconds) onComplete {
-            case Success(r) => r ! ServerActorsInformation(RootActorPath(self.path.address) + "/user/" + ServerRole.toString)
-            case Failure(_) =>
-          }
-        }
       }
   }
 
   override def preStart(): Unit = {
     cluster.subscribe(self, classOf[MemberEvent])
-    //block on preStart to retrieve persistence actors, if none found, fail
-    for (s <- persistenceClusterSeedNodes) { (context.actorSelection(s + "/user/" + persistenceActorName) resolveOne) onComplete { case Success(ar) => persistenceActors :+ ar } }
   }
 
   override def postStop(): Unit = {
@@ -151,6 +147,6 @@ object Server {
       .withFallback(ConfigFactory.load())
 
     val system = ActorSystem(actorSystemName, config)
-    system.actorOf(Props(new DpwManagerServer(persistenceClusterSeedNodes.split(","), persistenceActorName)), name = serverName)
+    system.actorOf(Props[DpwManagerServer], name = serverName)
   }
 }
