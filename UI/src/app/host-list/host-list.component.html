@@ -1,5 +1,10 @@
+<div class="row" [hidden]="addHostError === ''">
+  <div class="col-xs-12">
+    <div class="alert alert-danger" role="alert">{{addHostError}}</div>
+  </div>
+</div>
 
-<app-add-host-form></app-add-host-form>
+<app-add-host-form [(hostEmitter)]="onAddHostFormSubmit(response)" [(showMoreOptions)]="true"></app-add-host-form>
 
 <div class="row">
   <div class="col-sm-2"></div>
@@ -33,7 +38,7 @@
       </div>
       <div class="modal-body">
         <div class="alert alert-danger" *ngIf="deployNewRoleError">{{deployNewRoleError}}</div>
-        <app-add-deployment-form [(parentDeploymentByRole)]="deploymentByRole"></app-add-deployment-form>
+        <app-add-deployment-form [(parentDeploymentByRole)]="deploymentByRole" [(showMoreOptions)]="f"></app-add-deployment-form>
       </div>
       <div class="modal-footer">
         <button *ngIf="selectedIndex >= 0" type="button" class="btn btn-primary" data-dismiss="modal" (click)="onDeployRoleClicked()">Deploy Selected Role</button>
@@ -78,7 +83,10 @@
         <p *ngFor="let exec of host.executions">Execution IDs:
           <span><a href="">{{exec.agentExecId}}</a></span>
         </p>
-        <p><a href="#" class="btn btn-primary" data-target=".add-master-modal" (click)="onNewRoleClick(host)">Deploy New Role</a></p>
+        <p>
+          <a href="#" class="btn btn-primary" data-target=".add-master-modal" (click)="onNewRoleClick(host)">Deploy New Role</a>
+          <a [routerLink]="['/masters/add', host.hostId]" class="btn btn-warning" role="button">Execute Master</a>
+        </p>
       </div>
     </div>
   </div>

@@ -7,7 +7,7 @@ import 'rxjs/add/operator/map';
 import 'rxjs/add/operator/catch';
 import 'rxjs/add/observable/throw';
 import {ConstantService} from './constant-service.service';
-import {MasterType} from './host-list/shared/host.model';
+import {MasterField, MasterType} from './host-list/shared/host.model';
 
 @Injectable()
 export class AgentExecutionService {
@@ -24,6 +24,21 @@ export class AgentExecutionService {
     return executions;
   }
 
+  addAgentExecution(agentExecution: AgentExecution): Observable<AgentExecution> {
+    return this.http
+      .post(`${this.constantService.API_ENDPOINT}/master/execute`, agentExecution, this.getHeaders())
+      .map(response => {
+        if (response.json().errors.length === 0) {
+          toAgentExecutionWithDetails(response.json());
+        } else {
+          Observable.throw(response.json().errors.join());
+        }
+      })
+      .catch((err: Response) => {
+         return Observable.throw(`An error occurred while deploying master: ${err.statusText.toString()}`);
+      });
+  }
+
   private getHeaders() {
     const headers = new Headers();
     headers.append('Accept', 'application/json');
@@ -32,7 +47,7 @@ export class AgentExecutionService {
 }
 
 function handleMastersExecutionRetrieveError(error: any) {
-  const errorMsg = error.message || `Something went wrong while retrieving masters executions from your hosts`
+  const errorMsg = error.message || `Something went wrong while retrieving masters executions from your hosts`;
   return Observable.throw(errorMsg);
 }
 
@@ -54,6 +69,20 @@ function toAgentExecution(r: any): AgentExecution {
     command: r.command,
     agentExecId: Number.parseInt(r.agentExecId),
     agentExecutionDetails: agentExecutionDetails
+  });
+
+  return agentExecution;
+}
+
+function toAgentExecutionWithDetails(r: any): AgentExecution {
+  const agentExecution = <AgentExecution>({
+    deployId: Number.parseInt(r.deployId),
+    cleanStop: r.cleanStop,
+    masterType: r.masterType,
+    executionTimestamp: Number(r.executionTimestamp),
+    command: r.command,
+    agentExecId: Number.parseInt(r.agentExecId),
+    agentExecutionDetails: r.agentExecutionDetails
   });
 
   return agentExecution;

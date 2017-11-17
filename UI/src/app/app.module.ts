@@ -13,6 +13,7 @@ import { AddHostFormComponent } from './add-host-form/add-host-form.component';
 import { AddDeploymentFormComponent } from './add-deployment-form/add-deployment-form.component';
 import { DeploymentByRoleComponent } from './deployment-by-role/deployment-by-role.component';
 import { NotificationComponent } from './notification/notification.component';
+import { AddAgentExecutionComponent } from './add-agent-execution/add-agent-execution.component';
 
 @NgModule({
   declarations: [
@@ -24,7 +25,8 @@ import { NotificationComponent } from './notification/notification.component';
     AddHostFormComponent,
     AddDeploymentFormComponent,
     DeploymentByRoleComponent,
-    NotificationComponent
+    NotificationComponent,
+    AddAgentExecutionComponent
   ],
   imports: [
     BrowserModule,

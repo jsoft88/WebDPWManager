@@ -17,6 +17,7 @@ export class MasterField {
   fieldId: number;
   fieldName: string;
   fieldDescription: string;
+  fieldEnabled: boolean;
 }
 
 export class DeploymentsByRoles {

@@ -21,4 +21,4 @@ case class MasterFieldsRetrieveCommandDesc(repository: MasterTypeHasFieldsReposi
   }
 }
 
-case class MasterFieldsRetrieveResponse(response: Seq[MasterField]) extends CommandResponseWrapper[Seq[MasterField]](response = response)
+case class MasterFieldsRetrieveResponse(response: Seq[(MasterField, Boolean)]) extends CommandResponseWrapper[Seq[(MasterField, Boolean)]](response = response)

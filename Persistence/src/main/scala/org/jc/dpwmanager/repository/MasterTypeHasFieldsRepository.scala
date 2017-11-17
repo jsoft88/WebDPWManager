@@ -10,7 +10,7 @@ import scala.concurrent.Future
 trait MasterTypeHasFieldsRepository extends BaseRepository[Int, MasterTypeHasFields] {
 
   @throws(classOf[Exception])
-  def getFieldsForMaster(masterTypeId: Short, asc: Boolean): Future[Seq[MasterField]]
+  def getFieldsForMaster(masterTypeId: Short, asc: Boolean): Future[Seq[(MasterField, Boolean)]]
 
   @throws(classOf[Exception])
   def updateOrderingOfFields(masterTypeFields: Seq[MasterTypeHasFields]): Future[Boolean]

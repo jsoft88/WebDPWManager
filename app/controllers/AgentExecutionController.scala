@@ -10,7 +10,9 @@ import utils.{ReachPersistenceAgentWith, ReadsAndWrites}
 import akka.pattern.ask
 import akka.util.Timeout
 import initialization.InitialConfiguration
-import play.api.libs.json.{JsPath, JsValue, Json, Writes}
+import org.jc.dpwmanager.interaction.ExecutableFactory
+import org.jc.dpwmanager.util.{DeployMasterCompleted, DeployMasterStart, MessageWrapper}
+import play.api.libs.json._
 import play.api.libs.functional.syntax._
 
 import scala.concurrent.duration._
@@ -74,7 +76,49 @@ class AgentExecutionController @Inject()(cc: ControllerComponents)(implicit ec: 
       case None => Future.successful(InternalServerError(noBusinessActor))
     }
   }
+
+  def addNewExecution = Action(parse.json).async { request =>
+    val agentExecutionResult = request.body.validate[AgentExecutionUIModel]
+    agentExecutionResult.fold(
+      errors => {
+        val errAgentExecution = AgentExecutionUIModel(
+          agentExecId = 0,
+          command = "",
+          executionTimestamp = 0L,
+          deployment = DeploymentByRoleUIModel(
+            deployId = 0,
+            actorName = "",
+            actorSystemName = "",
+            port = 0,
+            role = DpwRolesUIModel(roleId = "", roleLabel = "", roleDescription = ""),
+            componentId = 0),
+          masterType = MasterTypeUIModel(masterTypeId = 0, masterLabel = ""),
+          cleanStop = false,
+          agentExecutionDetails = Seq.empty[AgentExecutionDetailsUIModel])
+
+        Future.successful(
+          InternalServerError(
+            Json.toJson(AddExecutionResponse(errAgentExecution, errors = Seq(JsError.toJson(errors).toString())))))
+      },
+      agentExecution => {
+        InitialConfiguration.businessActor match {
+          case Some(ar) => (ar ? DeployMasterStart(MessageWrapper(execArgs = ExecutableFactory.getExecutable(masterTypeId = 0, masterTypeLabel = ExecutableFactory.DUMMY_EXECUTABLE).head, deployId = agentExecution.deployment.deployId, actorName = Some(agentExecution.deployment.actorName), masterTypeId = agentExecution.masterType.masterTypeId, address = "", port = agentExecution.deployment.port, )))
+            .mapTo[DeployMasterCompleted].flatMap(deployCompleted => {
+            val newAgentExec = AgentExecution(agentExecId = 0, command = deployCompleted.msgWrapper.execArgs.toString, cleanStop = false, executionTimestamp = System.currentTimeMillis(), deployId = agentExecution.deployment.deployId, masterTypeId = agentExecution.masterType.masterTypeId)
+            (ar ? ReachPersistenceAgentWith(CommandWrapper(AgentExecutionInsertCommand(new DefaultAgentExecutionRepositoryImpl(), newAgentExec)))).mapTo[AgentExecutionInsertResponse].map(s => Ok(Json.toJson(AddExecutionResponse(agentExecution.copy(agentExecId = s.response.agentExecId, executionTimestamp = s.response.executionTimestamp), errors = Seq.empty))))
+              .recover {
+                case ex => InternalServerError(Json.toJson(AddExecutionResponse(agentExecution = agentExecution, errors = Seq(ex.getMessage))))
+              }
+          }).recover {
+            case ex => InternalServerError(Json.toJson(AddExecutionResponse(agentExecution = agentExecution, errors = Seq("Failed to launch master in selected deployment", ex.getMessage))))
+          }
+          case None => Future.successful(InternalServerError(noBusinessActor))
+        }
+      })
+  }
 }
+
+case class AddExecutionResponse(agentExecution: AgentExecutionUIModel, errors: Seq[String])
 
 case class AgentExecutionUIModel(agentExecId: Int, command: String, deployment: DeploymentByRoleUIModel, masterType: MasterTypeUIModel, executionTimestamp: Long, cleanStop: Boolean, agentExecutionDetails: Seq[AgentExecutionDetailsUIModel])
 

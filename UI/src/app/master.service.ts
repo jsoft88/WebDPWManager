@@ -20,6 +20,16 @@ export class MasterService {
     return masterType;
   }
 
+  getMasterTypes(): Observable<MasterType[]> {
+    return this
+      .http
+      .get(`${this.constantService.API_ENDPOINT}/master/types`, this.getHeaders())
+      .map(response => {
+        response.json().map(mt => toMasterType(mt));
+      })
+      .catch((r: Response) => { return Observable.throw(r.status) });
+  }
+
   getMasterFields(masterTypeId: number): Observable<MasterField[]> {
     const masterFields =
       this.http.get(`${this.constantService.API_ENDPOINT}/master/fields/${masterTypeId}`, this.getHeaders())
@@ -56,7 +66,8 @@ function toMasterField(r: any): MasterField {
   const masterField = <MasterField>({
     fieldId: r.fieldId,
     fieldName: r.fieldName,
-    fieldDescription: r.fieldDescription
+    fieldDescription: r.fieldDescription,
+    fieldEnabled: r.fieldEnabled
   });
   return masterField;
 }

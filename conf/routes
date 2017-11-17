@@ -42,6 +42,8 @@ GET     /api/master/field/:fieldId  controllers.MasterTypeController.getFieldByI
 
 GET     /api/master/fields/:masterTypeId          controllers.MasterTypeController.getFieldsForMaster(masterTypeId: Short)
 
+POST    /api/master/execute         controllers.AgentExecutionController.addNewExecution
+
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
 

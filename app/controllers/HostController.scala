@@ -218,7 +218,7 @@ class HostController @Inject()(cc: ControllerComponents)(implicit ec: ExecutionC
     val dummyDeployment = DeploymentByRole(deployId = 0, actorName = "", actorSystemName = "", hostId = 0, port = 0, componentId = 0, roleId = "")
 
     InitialConfiguration.businessActor match {
-      case Some(r) => (r ? ReachPersistenceAgentWith(CommandWrapper(ActorSystemsRetrieveCommand(new DefaultDeploymentByRoleRepositoryImpl(), dummyDeployment)))) mapTo[ActorSystemsRetrieveResponse] map(s => Ok(Json.toJson(s.response))) recover {
+      case Some(r) => (r ? ReachPersistenceAgentWith(CommandWrapper(ActorSystemsRetrieveCommand(new DefaultDeploymentByRoleRepositoryImpl(), dummyDeployment)))).mapTo[ActorSystemsRetrieveResponse].map(s => Ok(Json.toJson(s.response))) recover {
         case ex => InternalServerError(ex)
       }
       case None => Future.successful(InternalServerError(noBusinessActor))
@@ -254,13 +254,15 @@ class HostController @Inject()(cc: ControllerComponents)(implicit ec: ExecutionC
         }
     })
   }
+
+  def runMasterOnDeployment = Action(parse.json).async { request =>
+    val host
+  }
 }
 
 case class AddHostResponse(host: HostUIModel, errors: Seq[String])
 
 case class HostUIModel(hostId: Short, address: String, deployments: Seq[DeploymentByRoleUIModel], executions: Seq[AgentExecutionUIModel])
-
-case class MasterFieldUIModel(fieldId: Int, fieldName: String, fieldDescription: String)
 
 case class DpwRolesUIModel(roleId: String, roleLabel: String, roleDescription: String)
 

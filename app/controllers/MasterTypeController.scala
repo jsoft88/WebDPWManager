@@ -29,7 +29,8 @@ class MasterTypeController @Inject()(cc: ControllerComponents)(implicit ec: Exec
   implicit val masterFieldUIWrites: Writes[MasterFieldUIModel] = (
     (JsPath \ "fieldId").write[Int] and
       (JsPath \ "fieldName").write[String] and
-      (JsPath \ "fieldDescription").write[String]
+      (JsPath \ "fieldDescription").write[String] and
+      (JsPath \ "fieldEnabled").write[Boolean]
   )(unlift(MasterFieldUIModel.unapply))
 
   def getMasterTypes() = Action.async { implicit request =>
@@ -62,7 +63,7 @@ class MasterTypeController @Inject()(cc: ControllerComponents)(implicit ec: Exec
     InitialConfiguration.businessActor match {
       case Some(ar) => {
         (ar ? CommandWrapper(MasterFieldsRetrieveCommandAsc(new DefaultMasterTypeHasFieldsRepositoryImpl(), dummyEntity))).mapTo[MasterFieldsRetrieveResponse]
-          .map(s => Ok(Json.toJson(s.response.map(mf => MasterFieldUIModel(fieldId = mf.fieldId, fieldName = mf.fieldName, fieldDescription = mf.fieldDescription))))) recover { case ex => InternalServerError(ex.getMessage) }
+          .map(s => Ok(Json.toJson(s.response.map(mf => MasterFieldUIModel(fieldId = mf._1.fieldId, fieldName = mf._1.fieldName, fieldDescription = mf._1.fieldDescription, fieldEnabled = mf._2))))) recover { case ex => InternalServerError(ex.getMessage) }
       }
       case None => Future.successful(InternalServerError(noBusinessActor))
     }
@@ -82,3 +83,5 @@ class MasterTypeController @Inject()(cc: ControllerComponents)(implicit ec: Exec
 }
 
 case class MasterTypeUIModel(masterTypeId: Short, masterLabel: String)
+
+case class MasterFieldUIModel(fieldId: Int, fieldName: String, fieldDescription: String, fieldEnabled: Boolean)

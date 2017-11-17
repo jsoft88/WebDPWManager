@@ -24,7 +24,9 @@ export class AgentExecutionDetailsService {
 
   private getHeaders() {
     const headers = new Headers();
-    headers.append('Accept', 'application/json')
+    headers.append('Accept', 'application/json');
+    headers.append('Content-Type', 'application/json');
+
     return headers;
   }
 }
@@ -45,8 +47,7 @@ function toAgentExecutionDetails(r: any): AgentExecutionDetails {
   masterField.fieldDescription = '';
   const agentExecutionDetails = <AgentExecutionDetails>({
     field: masterField,
-    value: r.value.toString(),
-    fieldEnabled: r.fieldEnabled
+    value: r.value.toString()
   });
 
   return agentExecutionDetails;

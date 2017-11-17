@@ -29,6 +29,7 @@ export class HostListComponent implements OnInit {
   roleDeploySelectedCluster = '';
   deploymentByRole: DeploymentsByRoles;
   deployNewRoleError = '';
+  addHostError = '';
 
   constructor(
     private hostService: HostService,
@@ -149,5 +150,13 @@ export class HostListComponent implements OnInit {
         this.hosts = [];
       }
     );
+  }
+
+  onAddHostFormSubmit(response) {
+    if (response.error) {
+      this.addHostError = response.errorDescription;
+    } else {
+      this.hosts.push(response.host);
+    }
   }
 }

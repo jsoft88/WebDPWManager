@@ -26,7 +26,7 @@ class DefaultMasterTypeHasFieldsRepositoryImpl(implicit ec: ExecutionContext) ex
     db.run(
       (for {
         (mhf, mf) <- masterTypeHasFieldsTable filter (_.masterTypeId === masterTypeId) join masterFieldTable on (_.fieldId === _.fieldId) sortBy(t => if (asc) t._1.ordering.asc else t._1.ordering.desc)
-      } yield mf).result
+      } yield (mf, mhf.fieldEnabled)).result
     )
   }
 

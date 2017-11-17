@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
 import {DeploymentsByRoles, Host} from '../host-list/shared/host.model';
 import {DpwRoles} from '../dpwroles-list/shared/dpw-roles.model';
 import {NgForm} from '@angular/forms';
@@ -11,13 +11,15 @@ import {HostService} from '../host.service';
 })
 export class AddHostFormComponent implements OnInit {
 
-  host: Host;
-
   moreOptionsClicked = false;
   selectedRole: DpwRoles;
   deployment: DeploymentsByRoles;
   hostAddError = '';
   addingHost = false;
+  // this will tell the form to display the button that allows to deploy a role to the host being added.
+  @Input() showMoreOptions;
+  @Input() host: Host;
+  @Output() hostEmitter = new EventEmitter();
 
   constructor(private hostService: HostService) {
     this.selectedRole = new DpwRoles();
@@ -48,9 +50,10 @@ export class AddHostFormComponent implements OnInit {
 
     this.hostService.addHost(this.host).subscribe(
       postResponse => {
-        this.host.hostId = postResponse.hostId
+        this.host.hostId = postResponse.hostId;
+        this.hostEmitter.emit({'error': false, 'errorDescription': '', host: this.host});
       },
-      error => this.hostAddError = error,
+      error => this.hostEmitter.emit({'error': true, 'errorDescription': error, host: this.host}),
       () => this.addingHost = false
     );
   }

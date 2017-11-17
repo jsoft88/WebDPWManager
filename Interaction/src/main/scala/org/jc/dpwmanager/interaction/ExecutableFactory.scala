@@ -5,10 +5,10 @@ package org.jc.dpwmanager.interaction
   */
 object ExecutableFactory {
 
-  private final val TIME_MASTER: String = "tm"
-  private final val MASTER_WATCHER: String = "mw"
-  private final val CHILD_MASTER_WATCHER: String = "cmw"
-  private final val DUMMY_EXECUTABLE: String = "dummy"
+  final val TIME_MASTER: String = "tm"
+  final val MASTER_WATCHER: String = "mw"
+  final val CHILD_MASTER_WATCHER: String = "cmw"
+  final val DUMMY_EXECUTABLE: String = "dummy"
 
   @throws(classOf[Exception])
   def getExecutable(masterTypeId: Short, masterTypeLabel: String): Option[IExecutable] = {

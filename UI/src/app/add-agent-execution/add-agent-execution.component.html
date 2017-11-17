@@ -1,0 +1,70 @@
+<div class="modal-fade" id="addHost" aria-labelledBy="addHostModalDialog" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Add Host</h4>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-danger" role="alert" [hidden]="addHostError === ''">{{addHostError}}</div>
+        <app-add-host-form [(showMoreOptions)]="false" [(hostEmitter)]="onNewHostAdd(response)"></app-add-host-form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-fade" tabindex="-1" role="dialog" id="deployRole" aria-labelledby="deployRoleModalDialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title">Deploy New Role</h4>
+      </div>
+      <div class="modal-body">
+        <app-add-deployment-form [(parentDeploymentByRole)]="deploymentByRole"></app-add-deployment-form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-default" (click)="onDeploymentAdd()">Deploy Role</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-xs-12">
+    <div class="alert alert-danger" [hidden]="masterTypesRetrieveError === ''" role="alert">Could not retrieve master types list. Error: {{masterTypesRetrieveError}}</div>
+    <div class="alert alert-danger" [hidden]="hostsRetrieveError ===''" role="alert">Could not retrieve host list. Error: {{hostsRetrieveError}}</div>
+    <div class="alert alert-danger" [hidden]="deploymentsInHostError === ''" role="alert">Could not retrieve current deployments in selected host. Error: {{deploymentsInHostError}}</div>
+    <div class="alert alert-danger" [hidden]="addExecutionError === ''" role="alert">Failed to launch master type. Error: {{addExecutionError}}</div>
+    <div class="alert alert-success" [hidden]="!success" role="alert">Master has been launched successfully with ID {{agentExecution.agentExecId}}.</div>
+    <form>
+      <div class="form-group">
+        <label for="host">Choose a host</label>
+        <select id="host" (change)="onHostChange($event.value)">
+          <option *ngFor="let host of hosts" [value]="host">{{host.address}}</option>
+        </select>
+        <a href="#" data-toggle="modal" data-target="#addHostModalDialog">Add Host</a>
+      </div>
+      <div class="form-group">
+        <label for="deployment">Choose role deployment (cluster | agent name)</label>
+        <select id="deployment" (change)="onDeploymentChange($event.value)">
+          <option *ngFor="let deployment of deploymentsInHost" [value]="deployment">{{deployment.actorSystemName}}|{{deployment.actorName}}</option>
+        </select>
+        <a href="#" data-toggle="modal" data-target="#deployRoleModalDialog">Deploy new role</a>
+      </div>
+      <div class="form-group">
+        <label for="masterType">Choose a master type</label>
+        <select id="masterType" (change)="onMasterTypeChange($event.value)">
+          <option *ngFor="let masterType of masterTypes" [value]="masterType">{{masterType.masterLabel}}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="command">Command</label>
+        <input type="text" id="command" [()]>
+      </div>
+      <div class="form-group">
+        <app-agent-execution-details [(editing)]="true" [(masterTypeId)]="masterTypeId" [(agentExecution)]="agentExecution" [(executionDetailsSubmitEmitter)]="onExecutionDetailsSaved(response)"></app-agent-execution-details>
+      </div>
+    </form>
+  </div>
+</div>

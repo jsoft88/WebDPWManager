@@ -6,12 +6,12 @@
       <div class="alert alert-danger" [hidden]="address.valid || address.pristine" role="alert">Please enter host ip address</div>
     </div>
     <div class="form-group" [hidden]="moreOptionsClicked">
-      <button type="submit" class="btn btn-primary" (click)="submitForm()">Add New Host</button>
-      <button type="button" class="btn btn-success" (click)="onMoreOptionsClick()">More Options</button>
+      <button type="submit" class="btn btn-primary">Add New Host</button>
+      <button type="button" [hidden]="!showMoreOptions" class="btn btn-success" (click)="onMoreOptionsClick()">More Options</button>
     </div>
     <app-add-deployment-form [hidden]="!moreOptionsClicked" [(parentDeploymentByRole)]="deployment"></app-add-deployment-form>
     <div class="form-group" [hidden]="!moreOptionsClicked">
-      <button type="button" class="btn btn-primary">Add New Host</button>
+      <button type="submit" class="btn btn-primary">Add New Host</button>
     </div>
   </form>
 </div>

@@ -36,6 +36,18 @@ export class DeploymentByRoleService {
     return savedDeployment;
   }
 
+  getDeploymentsForHost(host: Host): Observable<DeploymentsByRoles[]> {
+    return this
+      .http
+      .get(`${ this.constantsService.API_ENDPOINT }/hosts/roles/${ host.hostId }`, this.getHeaders())
+      .map(response => {
+        response.json().map(d => toDeploymentsByRoles(d));
+      })
+      .catch((error: Response) => {
+        return Observable.throw(error.statusText);
+      });
+  }
+
   private getHeaders(): Headers {
     const headers = new Headers();
     headers.append('accept', 'application/json');
