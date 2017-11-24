@@ -4,7 +4,7 @@
   </div>
 </div>
 
-<app-add-host-form [(hostEmitter)]="onAddHostFormSubmit(response)" [(showMoreOptions)]="true"></app-add-host-form>
+<app-add-host-form (hostEmitter)="onAddHostFormSubmit($event)" (showMoreOptions)="true"></app-add-host-form>
 
 <div class="row">
   <div class="col-sm-2"></div>
@@ -38,10 +38,10 @@
       </div>
       <div class="modal-body">
         <div class="alert alert-danger" *ngIf="deployNewRoleError">{{deployNewRoleError}}</div>
-        <app-add-deployment-form [(parentDeploymentByRole)]="deploymentByRole" [(showMoreOptions)]="f"></app-add-deployment-form>
+        <app-add-deployment-form (parentDeploymentByRole)="deploymentByRole"></app-add-deployment-form>
       </div>
       <div class="modal-footer">
-        <button *ngIf="selectedIndex >= 0" type="button" class="btn btn-primary" data-dismiss="modal" (click)="onDeployRoleClicked()">Deploy Selected Role</button>
+        <button type="button" class="btn btn-primary" data-dismiss="modal" (click)="onDeployRoleClicked()">Deploy Selected Role</button>
         <button type="button" class="btn btn-info" data-dismiss="modal">Cancel</button>
       </div>
     </div>

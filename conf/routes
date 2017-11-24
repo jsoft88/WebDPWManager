@@ -22,7 +22,7 @@ GET     /api/hosts/deployments/details/:deployId controllers.HostController.getS
 
 POST    /api/hosts/deployments/add  controllers.HostController.deployNewRole
 
-GET     /api/hosts/roles/:hostId    controllers.HostController.getDeploymentsForHost(hostId: Short)
+GET     /api/hosts/roles/:hostId    controllers.HostController.getDeploymentsForHost(hostId: Int)
 
 GET     /api/hosts/all              controllers.HostController.getAllHosts
 
@@ -34,13 +34,13 @@ GET     /api/hosts/role/deployments/:roleId controllers.HostController.getAllHos
 
 GET     /api/execs/details/:agentExecId controllers.AgentExecutionController.getAgentExecutionDetails(agentExecId: Int)
 
-GET     /api/master/type/:masterTypeId controllers.MasterTypeController.getMasterType(masterTypeId: Short)
+GET     /api/master/type/:masterTypeId controllers.MasterTypeController.getMasterType(masterTypeId: Int)
 
 GET     /api/master/types           controllers.MasterTypeController.getMasterTypes
 
 GET     /api/master/field/:fieldId  controllers.MasterTypeController.getFieldById(fieldId: Int)
 
-GET     /api/master/fields/:masterTypeId          controllers.MasterTypeController.getFieldsForMaster(masterTypeId: Short)
+GET     /api/master/fields/:masterTypeId          controllers.MasterTypeController.getFieldsForMaster(masterTypeId: Int)
 
 POST    /api/master/execute         controllers.AgentExecutionController.addNewExecution
 

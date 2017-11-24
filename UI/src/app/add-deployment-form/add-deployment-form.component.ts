@@ -5,7 +5,7 @@ import {DeploymentsByRoles} from '../host-list/shared/host.model';
 
 @Component({
   selector: 'app-add-deployment-form',
-  template: './add-deployment-form.component.html',
+  templateUrl: './add-deployment-form.component.html',
   styles: []
 })
 export class AddDeploymentFormComponent implements OnInit {

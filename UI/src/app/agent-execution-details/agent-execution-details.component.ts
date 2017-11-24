@@ -7,11 +7,11 @@ import {Observable} from 'rxjs/Observable';
 import 'rxjs/add/observable/concat';
 import {MasterField, MasterType} from '../host-list/shared/host.model';
 import {AgentExecutionService} from '../agent-execution.service';
-import {AgentExecution} from "../agent-execution/shared/agent-execution.model";
+import {AgentExecution} from '../agent-execution/shared/agent-execution.model';
 
 @Component({
   selector: 'app-agent-execution-details',
-  template: './agent-execution-details.component.html',
+  templateUrl: './agent-execution-details.component.html',
   styleUrls: ['./agent-execution-details.component.css']
 })
 export class AgentExecutionDetailsComponent implements OnInit, OnDestroy {
@@ -117,5 +117,9 @@ export class AgentExecutionDetailsComponent implements OnInit, OnDestroy {
       err => this.executionDetailsSubmitEmitter.emit(
         {'error': true, 'errorDescription': err, 'agentExecution': this.agentExecution})
     );
+  }
+
+  onDeployCancel(): void {
+
   }
 }

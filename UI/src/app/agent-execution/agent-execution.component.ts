@@ -6,7 +6,7 @@ import {ActivatedRoute, Router} from '@angular/router';
 
 @Component({
   selector: 'app-agent-execution',
-  template: './agent-execution.component.html',
+  templateUrl: './agent-execution.component.html',
   styles: []
 })
 export class AgentExecutionComponent implements OnInit, OnDestroy {

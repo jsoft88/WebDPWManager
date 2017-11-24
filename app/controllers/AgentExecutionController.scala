@@ -2,6 +2,7 @@ package controllers
 
 import javax.inject.{Inject, Named, Singleton}
 
+import akka.actor.ActorRef
 import org.jc.dpwmanager.commands._
 import org.jc.dpwmanager.impl.{DefaultAgentExecutionDetailsRepositoryImpl, DefaultAgentExecutionRepositoryImpl}
 import org.jc.dpwmanager.models.{AgentExecution, AgentExecutionDetails}
@@ -24,9 +25,11 @@ import scala.util.{Failure, Success}
   */
 
 @Singleton
-class AgentExecutionController @Inject()(cc: ControllerComponents)(implicit ec: ExecutionContext) extends AbstractController(cc) {
+class AgentExecutionController @Inject()(@Named("businessActor") businessActor: ActorRef, cc: ControllerComponents)(implicit ec: ExecutionContext) extends AbstractController(cc) {
 
   implicit val timeout = Timeout(15 seconds)
+
+  InitialConfiguration.businessActor_(Some(businessActor))
 
   implicit val masterFieldWrites: Writes[MasterFieldUIModel] = ReadsAndWrites.masterFieldWrites
 
@@ -37,6 +40,13 @@ class AgentExecutionController @Inject()(cc: ControllerComponents)(implicit ec: 
   implicit val deploymentByRoleWrites: Writes[DeploymentByRoleUIModel] = ReadsAndWrites.deploymentByRoleWrites
 
   implicit val agentExecutionWrites: Writes[AgentExecutionUIModel] = ReadsAndWrites.agentExecutionWrites
+
+  implicit val agentExecutionReads: Reads[AgentExecutionUIModel] = ReadsAndWrites.agentExecutionReads
+
+  implicit val addExecutionResponseWrites: Writes[AddExecutionResponse] = (
+    (JsPath \ "agentExecution").write[AgentExecutionUIModel] and
+      (JsPath \ "errors").write[Seq[String]]
+  )(unlift(AddExecutionResponse.unapply))
 
   def noBusinessActor: String = "No business actor available to fulfill this request"
 
@@ -69,7 +79,7 @@ class AgentExecutionController @Inject()(cc: ControllerComponents)(implicit ec: 
     InitialConfiguration.businessActor match {
       case Some(ar) => (ar ? ReachPersistenceAgentWith(CommandWrapper(AgentExecutionDetailsRetrieveCommand(new DefaultAgentExecutionDetailsRepositoryImpl(), agentExecutionDetails))))
         .mapTo[AgentExecutionDetailsRetrieveResponse].map(s => {
-            Ok(Json.toJson(AgentExecutionDetailsUIModel(field = MasterFieldUIModel(fieldId = s.response.fieldId, fieldName = "", fieldDescription = ""), value = s.response.value, fieldEnabled = false)))
+            Ok(Json.toJson(s.response.map(det => AgentExecutionDetailsUIModel(field = MasterFieldUIModel(fieldId = det.fieldId, fieldDescription = "", fieldEnabled = false, fieldName = ""), value = det.value))))
           }) recover {
           case ex => InternalServerError("Error while retrieving details of this execution. Exception is: " + ex.getMessage)
         }
@@ -102,7 +112,7 @@ class AgentExecutionController @Inject()(cc: ControllerComponents)(implicit ec: 
       },
       agentExecution => {
         InitialConfiguration.businessActor match {
-          case Some(ar) => (ar ? DeployMasterStart(MessageWrapper(execArgs = ExecutableFactory.getExecutable(masterTypeId = 0, masterTypeLabel = ExecutableFactory.DUMMY_EXECUTABLE).head, deployId = agentExecution.deployment.deployId, actorName = Some(agentExecution.deployment.actorName), masterTypeId = agentExecution.masterType.masterTypeId, address = "", port = agentExecution.deployment.port, )))
+          case Some(ar) => (ar ? DeployMasterStart(MessageWrapper(execArgs = ExecutableFactory.getExecutable(masterTypeId = 0, masterTypeLabel = ExecutableFactory.DUMMY_EXECUTABLE).head, deployId = agentExecution.deployment.deployId, actorName = Some(agentExecution.deployment.actorName), masterTypeId = agentExecution.masterType.masterTypeId, address = "", port = agentExecution.deployment.port)))
             .mapTo[DeployMasterCompleted].flatMap(deployCompleted => {
             val newAgentExec = AgentExecution(agentExecId = 0, command = deployCompleted.msgWrapper.execArgs.toString, cleanStop = false, executionTimestamp = System.currentTimeMillis(), deployId = agentExecution.deployment.deployId, masterTypeId = agentExecution.masterType.masterTypeId)
             (ar ? ReachPersistenceAgentWith(CommandWrapper(AgentExecutionInsertCommand(new DefaultAgentExecutionRepositoryImpl(), newAgentExec)))).mapTo[AgentExecutionInsertResponse].map(s => Ok(Json.toJson(AddExecutionResponse(agentExecution.copy(agentExecId = s.response.agentExecId, executionTimestamp = s.response.executionTimestamp), errors = Seq.empty))))
@@ -122,4 +132,4 @@ case class AddExecutionResponse(agentExecution: AgentExecutionUIModel, errors: S
 
 case class AgentExecutionUIModel(agentExecId: Int, command: String, deployment: DeploymentByRoleUIModel, masterType: MasterTypeUIModel, executionTimestamp: Long, cleanStop: Boolean, agentExecutionDetails: Seq[AgentExecutionDetailsUIModel])
 
-case class AgentExecutionDetailsUIModel(field: MasterFieldUIModel, value: String, fieldEnabled: Boolean)
+case class AgentExecutionDetailsUIModel(field: MasterFieldUIModel, value: String)

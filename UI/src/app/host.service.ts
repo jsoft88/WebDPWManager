@@ -6,20 +6,27 @@ import 'rxjs/add/operator/catch';
 import 'rxjs/add/observable/throw';
 import {AgentExecution} from './agent-execution/shared/agent-execution.model';
 import {ConstantService} from './constant-service.service';
+import {BaseService} from './base-service';
 
 @Injectable()
-export class HostService {
+export class HostService extends BaseService {
 
   // private baseUrl = 'http://localhost:9000/api';
 
-  constructor(private http: Http, private constantsService: ConstantService) { }
+  constructor(private http: Http, private constantsService: ConstantService) { super(); }
 
   getAll(): Observable<Host[]> {
     const hosts =
       this.http
-        .get(`${this.constantsService.API_ENDPOINT}/hosts`, { headers: this.getHeaders() })
+        .get(`${this.constantsService.API_ENDPOINT}/hosts/all`, { headers: this.getHeaders() })
         .map(mapHosts)
-        .catch(handleHostListRetrieveError);
+        .catch((errResponse: Response) => {
+          if (this.analyzeIfResponseIsLackOfRole(errResponse.json(), this.constantsService.LACK_OF_ROLE_ERROR_RANGE)) {
+            return Observable.throw({ 'type': this.constantsService.ERROR_LACK_OF_ROLE, 'errorDescription': errResponse.statusText });
+          }
+
+          return Observable.throw({ 'type': this.constantsService.ERROR_OTHER, 'errorDescription': errResponse.statusText });
+        });
 
     return hosts;
   }
@@ -29,7 +36,13 @@ export class HostService {
       this.http
         .get(`${ this.constantsService.API_ENDPOINT }/hosts/cluster/${ actorSystemName }`, this.getHeaders())
         .map( response => mapHosts(response))
-        .catch(handleHostListRetrieveError);
+        .catch( (errResponse: Response) => {
+          if (this.analyzeIfResponseIsLackOfRole(errResponse.json(), this.constantsService.LACK_OF_ROLE_ERROR_RANGE)) {
+            return Observable.throw({ 'type': this.constantsService.ERROR_LACK_OF_ROLE, 'errorDescription': errResponse.statusText });
+          }
+
+          return Observable.throw({ 'type': this.constantsService.ERROR_OTHER, 'errorDescription': errResponse.statusText });
+        });
 
     return hosts;
   }
@@ -39,9 +52,15 @@ export class HostService {
     return this.http
       .get(`${ this.constantsService.API_ENDPOINT }/hosts/clusters`, this.getHeaders())
       .map(response => {
-        response.json().forEach(e => clusters.push(e))
+        response.json().forEach(e => clusters.push(e));
         return clusters;
-      }).catch(error => Observable.throw(error));
+      }).catch((error: Response) => {
+        if (this.analyzeIfResponseIsLackOfRole(error.json(), this.constantsService.LACK_OF_ROLE_ERROR_RANGE)) {
+          return Observable.throw({ 'type': this.constantsService.ERROR_LACK_OF_ROLE, 'errorDescription': error.statusText });
+        }
+
+        return Observable.throw({ 'type': this.constantsService.ERROR_OTHER, 'errorDescription': error.statusText });
+      });
   }
 
   addHost(host: Host): Observable<Host> {
@@ -54,7 +73,13 @@ export class HostService {
           } else {
             toHost(data.json());
           }
-        }).catch(handleAddHostError);
+        }).catch((error: Response) => {
+          if (this.analyzeIfResponseIsLackOfRole(error.json(), this.constantsService.LACK_OF_ROLE_ERROR_RANGE)) {
+            return Observable.throw({ 'type': this.constantsService.ERROR_LACK_OF_ROLE, 'errorDescription': error.statusText });
+          }
+
+          return Observable.throw({ 'type': this.constantsService.ERROR_OTHER, 'errorDescription': error.statusText });
+        });
 
     return hostResponse;
   }

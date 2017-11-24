@@ -1,7 +1,7 @@
 
 // @GENERATOR:play-routes-compiler
 // @SOURCE:C:/Users/jorge/IdeaProjects/WebDPWManager/conf/routes
-// @DATE:Thu Nov 09 09:35:47 PYST 2017
+// @DATE:Mon Nov 20 16:08:27 PYST 2017
 
 package router
 
@@ -26,7 +26,7 @@ class Routes(
   HostController_4: controllers.HostController,
   // @LINE:37
   MasterTypeController_2: controllers.MasterTypeController,
-  // @LINE:46
+  // @LINE:48
   Assets_6: controllers.Assets,
   val prefix: String
 ) extends GeneratedRouter {
@@ -45,7 +45,7 @@ class Routes(
     HostController_4: controllers.HostController,
     // @LINE:37
     MasterTypeController_2: controllers.MasterTypeController,
-    // @LINE:46
+    // @LINE:48
     Assets_6: controllers.Assets
   ) = this(errorHandler, HomeController_1, CountController_0, AsyncController_3, AgentExecutionController_5, HostController_4, MasterTypeController_2, Assets_6, "/")
 
@@ -68,16 +68,17 @@ class Routes(
     ("""POST""", this.prefix + (if(this.prefix.endsWith("/")) "" else "/") + """api/hosts/add""", """controllers.HostController.addHost"""),
     ("""GET""", this.prefix + (if(this.prefix.endsWith("/")) "" else "/") + """api/hosts/deployments/details/""" + "$" + """deployId<[^/]+>""", """controllers.HostController.getSingleDeploymentForRoleById(deployId:Int)"""),
     ("""POST""", this.prefix + (if(this.prefix.endsWith("/")) "" else "/") + """api/hosts/deployments/add""", """controllers.HostController.deployNewRole"""),
-    ("""GET""", this.prefix + (if(this.prefix.endsWith("/")) "" else "/") + """api/hosts/roles/""" + "$" + """hostId<[^/]+>""", """controllers.HostController.getDeploymentsForHost(hostId:Short)"""),
+    ("""GET""", this.prefix + (if(this.prefix.endsWith("/")) "" else "/") + """api/hosts/roles/""" + "$" + """hostId<[^/]+>""", """controllers.HostController.getDeploymentsForHost(hostId:Int)"""),
     ("""GET""", this.prefix + (if(this.prefix.endsWith("/")) "" else "/") + """api/hosts/all""", """controllers.HostController.getAllHosts"""),
     ("""GET""", this.prefix + (if(this.prefix.endsWith("/")) "" else "/") + """api/hosts/cluster/""" + "$" + """actorSystemName<[^/]+>""", """controllers.HostController.getAllHostsInActorSystemCluster(actorSystemName:String)"""),
     ("""GET""", this.prefix + (if(this.prefix.endsWith("/")) "" else "/") + """api/hosts/clusters""", """controllers.HostController.getAllActorSystems"""),
     ("""GET""", this.prefix + (if(this.prefix.endsWith("/")) "" else "/") + """api/hosts/role/deployments/""" + "$" + """roleId<[^/]+>""", """controllers.HostController.getAllHostsWhereRoleDeployed(roleId:String)"""),
     ("""GET""", this.prefix + (if(this.prefix.endsWith("/")) "" else "/") + """api/execs/details/""" + "$" + """agentExecId<[^/]+>""", """controllers.AgentExecutionController.getAgentExecutionDetails(agentExecId:Int)"""),
-    ("""GET""", this.prefix + (if(this.prefix.endsWith("/")) "" else "/") + """api/master/type/""" + "$" + """masterTypeId<[^/]+>""", """controllers.MasterTypeController.getMasterType(masterTypeId:Short)"""),
+    ("""GET""", this.prefix + (if(this.prefix.endsWith("/")) "" else "/") + """api/master/type/""" + "$" + """masterTypeId<[^/]+>""", """controllers.MasterTypeController.getMasterType(masterTypeId:Int)"""),
     ("""GET""", this.prefix + (if(this.prefix.endsWith("/")) "" else "/") + """api/master/types""", """controllers.MasterTypeController.getMasterTypes"""),
     ("""GET""", this.prefix + (if(this.prefix.endsWith("/")) "" else "/") + """api/master/field/""" + "$" + """fieldId<[^/]+>""", """controllers.MasterTypeController.getFieldById(fieldId:Int)"""),
-    ("""GET""", this.prefix + (if(this.prefix.endsWith("/")) "" else "/") + """api/master/fields/""" + "$" + """masterTypeId<[^/]+>""", """controllers.MasterTypeController.getFieldsForMaster(masterTypeId:Short)"""),
+    ("""GET""", this.prefix + (if(this.prefix.endsWith("/")) "" else "/") + """api/master/fields/""" + "$" + """masterTypeId<[^/]+>""", """controllers.MasterTypeController.getFieldsForMaster(masterTypeId:Int)"""),
+    ("""POST""", this.prefix + (if(this.prefix.endsWith("/")) "" else "/") + """api/master/execute""", """controllers.AgentExecutionController.addNewExecution"""),
     ("""GET""", this.prefix + (if(this.prefix.endsWith("/")) "" else "/") + """assets/""" + "$" + """file<.+>""", """controllers.Assets.versioned(path:String = "/public", file:Asset)"""),
     Nil
   ).foldLeft(List.empty[(String,String,String)]) { (s,e) => e.asInstanceOf[Any] match {
@@ -253,12 +254,12 @@ class Routes(
     PathPattern(List(StaticPart(this.prefix), StaticPart(this.defaultPrefix), StaticPart("api/hosts/roles/"), DynamicPart("hostId", """[^/]+""",true)))
   )
   private[this] lazy val controllers_HostController_getDeploymentsForHost9_invoker = createInvoker(
-    HostController_4.getDeploymentsForHost(fakeValue[Short]),
+    HostController_4.getDeploymentsForHost(fakeValue[Int]),
     play.api.routing.HandlerDef(this.getClass.getClassLoader,
       "router",
       "controllers.HostController",
       "getDeploymentsForHost",
-      Seq(classOf[Short]),
+      Seq(classOf[Int]),
       "GET",
       this.prefix + """api/hosts/roles/""" + "$" + """hostId<[^/]+>""",
       """""",
@@ -361,12 +362,12 @@ class Routes(
     PathPattern(List(StaticPart(this.prefix), StaticPart(this.defaultPrefix), StaticPart("api/master/type/"), DynamicPart("masterTypeId", """[^/]+""",true)))
   )
   private[this] lazy val controllers_MasterTypeController_getMasterType15_invoker = createInvoker(
-    MasterTypeController_2.getMasterType(fakeValue[Short]),
+    MasterTypeController_2.getMasterType(fakeValue[Int]),
     play.api.routing.HandlerDef(this.getClass.getClassLoader,
       "router",
       "controllers.MasterTypeController",
       "getMasterType",
-      Seq(classOf[Short]),
+      Seq(classOf[Int]),
       "GET",
       this.prefix + """api/master/type/""" + "$" + """masterTypeId<[^/]+>""",
       """""",
@@ -415,12 +416,12 @@ class Routes(
     PathPattern(List(StaticPart(this.prefix), StaticPart(this.defaultPrefix), StaticPart("api/master/fields/"), DynamicPart("masterTypeId", """[^/]+""",true)))
   )
   private[this] lazy val controllers_MasterTypeController_getFieldsForMaster18_invoker = createInvoker(
-    MasterTypeController_2.getFieldsForMaster(fakeValue[Short]),
+    MasterTypeController_2.getFieldsForMaster(fakeValue[Int]),
     play.api.routing.HandlerDef(this.getClass.getClassLoader,
       "router",
       "controllers.MasterTypeController",
       "getFieldsForMaster",
-      Seq(classOf[Short]),
+      Seq(classOf[Int]),
       "GET",
       this.prefix + """api/master/fields/""" + "$" + """masterTypeId<[^/]+>""",
       """""",
@@ -428,11 +429,29 @@ class Routes(
     )
   )
 
-  // @LINE:46
-  private[this] lazy val controllers_Assets_versioned19_route = Route("GET",
+  // @LINE:45
+  private[this] lazy val controllers_AgentExecutionController_addNewExecution19_route = Route("POST",
+    PathPattern(List(StaticPart(this.prefix), StaticPart(this.defaultPrefix), StaticPart("api/master/execute")))
+  )
+  private[this] lazy val controllers_AgentExecutionController_addNewExecution19_invoker = createInvoker(
+    AgentExecutionController_5.addNewExecution,
+    play.api.routing.HandlerDef(this.getClass.getClassLoader,
+      "router",
+      "controllers.AgentExecutionController",
+      "addNewExecution",
+      Nil,
+      "POST",
+      this.prefix + """api/master/execute""",
+      """""",
+      Seq()
+    )
+  )
+
+  // @LINE:48
+  private[this] lazy val controllers_Assets_versioned20_route = Route("GET",
     PathPattern(List(StaticPart(this.prefix), StaticPart(this.defaultPrefix), StaticPart("assets/"), DynamicPart("file", """.+""",false)))
   )
-  private[this] lazy val controllers_Assets_versioned19_invoker = createInvoker(
+  private[this] lazy val controllers_Assets_versioned20_invoker = createInvoker(
     Assets_6.versioned(fakeValue[String], fakeValue[Asset]),
     play.api.routing.HandlerDef(this.getClass.getClassLoader,
       "router",
@@ -505,7 +524,7 @@ class Routes(
   
     // @LINE:25
     case controllers_HostController_getDeploymentsForHost9_route(params) =>
-      call(params.fromPath[Short]("hostId", None)) { (hostId) =>
+      call(params.fromPath[Int]("hostId", None)) { (hostId) =>
         controllers_HostController_getDeploymentsForHost9_invoker.call(HostController_4.getDeploymentsForHost(hostId))
       }
   
@@ -541,7 +560,7 @@ class Routes(
   
     // @LINE:37
     case controllers_MasterTypeController_getMasterType15_route(params) =>
-      call(params.fromPath[Short]("masterTypeId", None)) { (masterTypeId) =>
+      call(params.fromPath[Int]("masterTypeId", None)) { (masterTypeId) =>
         controllers_MasterTypeController_getMasterType15_invoker.call(MasterTypeController_2.getMasterType(masterTypeId))
       }
   
@@ -559,14 +578,20 @@ class Routes(
   
     // @LINE:43
     case controllers_MasterTypeController_getFieldsForMaster18_route(params) =>
-      call(params.fromPath[Short]("masterTypeId", None)) { (masterTypeId) =>
+      call(params.fromPath[Int]("masterTypeId", None)) { (masterTypeId) =>
         controllers_MasterTypeController_getFieldsForMaster18_invoker.call(MasterTypeController_2.getFieldsForMaster(masterTypeId))
       }
   
-    // @LINE:46
-    case controllers_Assets_versioned19_route(params) =>
+    // @LINE:45
+    case controllers_AgentExecutionController_addNewExecution19_route(params) =>
+      call { 
+        controllers_AgentExecutionController_addNewExecution19_invoker.call(AgentExecutionController_5.addNewExecution)
+      }
+  
+    // @LINE:48
+    case controllers_Assets_versioned20_route(params) =>
       call(Param[String]("path", Right("/public")), params.fromPath[Asset]("file", None)) { (path, file) =>
-        controllers_Assets_versioned19_invoker.call(Assets_6.versioned(path, file))
+        controllers_Assets_versioned20_invoker.call(Assets_6.versioned(path, file))
       }
   }
 }

@@ -1,7 +1,7 @@
 
 // @GENERATOR:play-routes-compiler
 // @SOURCE:C:/Users/jorge/IdeaProjects/WebDPWManager/conf/routes
-// @DATE:Thu Nov 09 09:35:47 PYST 2017
+// @DATE:Mon Nov 20 16:08:27 PYST 2017
 
 import play.api.mvc.Call
 
@@ -11,14 +11,14 @@ import _root_.controllers.Assets.Asset
 // @LINE:7
 package controllers {
 
-  // @LINE:46
+  // @LINE:48
   class ReverseAssets(_prefix: => String) {
     def _defaultPrefix: String = {
       if (_prefix.endsWith("/")) "" else "/"
     }
 
   
-    // @LINE:46
+    // @LINE:48
     def versioned(file:Asset): Call = {
       implicit val _rrc = new play.core.routing.ReverseRouteContext(Map(("path", "/public")))
       Call("GET", _prefix + { _defaultPrefix } + "assets/" + implicitly[play.api.mvc.PathBindable[Asset]].unbind("file", file))
@@ -33,22 +33,22 @@ package controllers {
     }
 
   
-    // @LINE:37
-    def getMasterType(masterTypeId:Short): Call = {
-      
-      Call("GET", _prefix + { _defaultPrefix } + "api/master/type/" + play.core.routing.dynamicString(implicitly[play.api.mvc.PathBindable[Short]].unbind("masterTypeId", masterTypeId)))
-    }
-  
     // @LINE:41
     def getFieldById(fieldId:Int): Call = {
       
       Call("GET", _prefix + { _defaultPrefix } + "api/master/field/" + play.core.routing.dynamicString(implicitly[play.api.mvc.PathBindable[Int]].unbind("fieldId", fieldId)))
     }
   
-    // @LINE:43
-    def getFieldsForMaster(masterTypeId:Short): Call = {
+    // @LINE:37
+    def getMasterType(masterTypeId:Int): Call = {
       
-      Call("GET", _prefix + { _defaultPrefix } + "api/master/fields/" + play.core.routing.dynamicString(implicitly[play.api.mvc.PathBindable[Short]].unbind("masterTypeId", masterTypeId)))
+      Call("GET", _prefix + { _defaultPrefix } + "api/master/type/" + play.core.routing.dynamicString(implicitly[play.api.mvc.PathBindable[Int]].unbind("masterTypeId", masterTypeId)))
+    }
+  
+    // @LINE:43
+    def getFieldsForMaster(masterTypeId:Int): Call = {
+      
+      Call("GET", _prefix + { _defaultPrefix } + "api/master/fields/" + play.core.routing.dynamicString(implicitly[play.api.mvc.PathBindable[Int]].unbind("masterTypeId", masterTypeId)))
     }
   
     // @LINE:39
@@ -70,6 +70,12 @@ package controllers {
     def getAllHosts(): Call = {
       
       Call("GET", _prefix + { _defaultPrefix } + "api/hosts/all")
+    }
+  
+    // @LINE:25
+    def getDeploymentsForHost(hostId:Int): Call = {
+      
+      Call("GET", _prefix + { _defaultPrefix } + "api/hosts/roles/" + play.core.routing.dynamicString(implicitly[play.api.mvc.PathBindable[Int]].unbind("hostId", hostId)))
     }
   
     // @LINE:23
@@ -94,12 +100,6 @@ package controllers {
     def getAllHostsInActorSystemCluster(actorSystemName:String): Call = {
       
       Call("GET", _prefix + { _defaultPrefix } + "api/hosts/cluster/" + play.core.routing.dynamicString(implicitly[play.api.mvc.PathBindable[String]].unbind("actorSystemName", actorSystemName)))
-    }
-  
-    // @LINE:25
-    def getDeploymentsForHost(hostId:Short): Call = {
-      
-      Call("GET", _prefix + { _defaultPrefix } + "api/hosts/roles/" + play.core.routing.dynamicString(implicitly[play.api.mvc.PathBindable[Short]].unbind("hostId", hostId)))
     }
   
     // @LINE:19
@@ -160,6 +160,12 @@ package controllers {
     def getAgentExecutionDetails(agentExecId:Int): Call = {
       
       Call("GET", _prefix + { _defaultPrefix } + "api/execs/details/" + play.core.routing.dynamicString(implicitly[play.api.mvc.PathBindable[Int]].unbind("agentExecId", agentExecId)))
+    }
+  
+    // @LINE:45
+    def addNewExecution(): Call = {
+      
+      Call("POST", _prefix + { _defaultPrefix } + "api/master/execute")
     }
   
   }

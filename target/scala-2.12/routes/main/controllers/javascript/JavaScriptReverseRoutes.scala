@@ -1,7 +1,7 @@
 
 // @GENERATOR:play-routes-compiler
 // @SOURCE:C:/Users/jorge/IdeaProjects/WebDPWManager/conf/routes
-// @DATE:Thu Nov 09 09:35:47 PYST 2017
+// @DATE:Mon Nov 20 16:08:27 PYST 2017
 
 import play.api.routing.JavaScriptReverseRoute
 
@@ -11,7 +11,7 @@ import _root_.controllers.Assets.Asset
 // @LINE:7
 package controllers.javascript {
 
-  // @LINE:46
+  // @LINE:48
   class ReverseAssets(_prefix: => String) {
 
     def _defaultPrefix: String = {
@@ -19,7 +19,7 @@ package controllers.javascript {
     }
 
   
-    // @LINE:46
+    // @LINE:48
     def versioned: JavaScriptReverseRoute = JavaScriptReverseRoute(
       "controllers.Assets.versioned",
       """
@@ -39,16 +39,6 @@ package controllers.javascript {
     }
 
   
-    // @LINE:37
-    def getMasterType: JavaScriptReverseRoute = JavaScriptReverseRoute(
-      "controllers.MasterTypeController.getMasterType",
-      """
-        function(masterTypeId0) {
-          return _wA({method:"GET", url:"""" + _prefix + { _defaultPrefix } + """" + "api/master/type/" + encodeURIComponent((""" + implicitly[play.api.mvc.PathBindable[Short]].javascriptUnbind + """)("masterTypeId", masterTypeId0))})
-        }
-      """
-    )
-  
     // @LINE:41
     def getFieldById: JavaScriptReverseRoute = JavaScriptReverseRoute(
       "controllers.MasterTypeController.getFieldById",
@@ -59,12 +49,22 @@ package controllers.javascript {
       """
     )
   
+    // @LINE:37
+    def getMasterType: JavaScriptReverseRoute = JavaScriptReverseRoute(
+      "controllers.MasterTypeController.getMasterType",
+      """
+        function(masterTypeId0) {
+          return _wA({method:"GET", url:"""" + _prefix + { _defaultPrefix } + """" + "api/master/type/" + encodeURIComponent((""" + implicitly[play.api.mvc.PathBindable[Int]].javascriptUnbind + """)("masterTypeId", masterTypeId0))})
+        }
+      """
+    )
+  
     // @LINE:43
     def getFieldsForMaster: JavaScriptReverseRoute = JavaScriptReverseRoute(
       "controllers.MasterTypeController.getFieldsForMaster",
       """
         function(masterTypeId0) {
-          return _wA({method:"GET", url:"""" + _prefix + { _defaultPrefix } + """" + "api/master/fields/" + encodeURIComponent((""" + implicitly[play.api.mvc.PathBindable[Short]].javascriptUnbind + """)("masterTypeId", masterTypeId0))})
+          return _wA({method:"GET", url:"""" + _prefix + { _defaultPrefix } + """" + "api/master/fields/" + encodeURIComponent((""" + implicitly[play.api.mvc.PathBindable[Int]].javascriptUnbind + """)("masterTypeId", masterTypeId0))})
         }
       """
     )
@@ -95,6 +95,16 @@ package controllers.javascript {
       """
         function() {
           return _wA({method:"GET", url:"""" + _prefix + { _defaultPrefix } + """" + "api/hosts/all"})
+        }
+      """
+    )
+  
+    // @LINE:25
+    def getDeploymentsForHost: JavaScriptReverseRoute = JavaScriptReverseRoute(
+      "controllers.HostController.getDeploymentsForHost",
+      """
+        function(hostId0) {
+          return _wA({method:"GET", url:"""" + _prefix + { _defaultPrefix } + """" + "api/hosts/roles/" + encodeURIComponent((""" + implicitly[play.api.mvc.PathBindable[Int]].javascriptUnbind + """)("hostId", hostId0))})
         }
       """
     )
@@ -135,16 +145,6 @@ package controllers.javascript {
       """
         function(actorSystemName0) {
           return _wA({method:"GET", url:"""" + _prefix + { _defaultPrefix } + """" + "api/hosts/cluster/" + encodeURIComponent((""" + implicitly[play.api.mvc.PathBindable[String]].javascriptUnbind + """)("actorSystemName", actorSystemName0))})
-        }
-      """
-    )
-  
-    // @LINE:25
-    def getDeploymentsForHost: JavaScriptReverseRoute = JavaScriptReverseRoute(
-      "controllers.HostController.getDeploymentsForHost",
-      """
-        function(hostId0) {
-          return _wA({method:"GET", url:"""" + _prefix + { _defaultPrefix } + """" + "api/hosts/roles/" + encodeURIComponent((""" + implicitly[play.api.mvc.PathBindable[Short]].javascriptUnbind + """)("hostId", hostId0))})
         }
       """
     )
@@ -235,6 +235,16 @@ package controllers.javascript {
       """
         function(agentExecId0) {
           return _wA({method:"GET", url:"""" + _prefix + { _defaultPrefix } + """" + "api/execs/details/" + encodeURIComponent((""" + implicitly[play.api.mvc.PathBindable[Int]].javascriptUnbind + """)("agentExecId", agentExecId0))})
+        }
+      """
+    )
+  
+    // @LINE:45
+    def addNewExecution: JavaScriptReverseRoute = JavaScriptReverseRoute(
+      "controllers.AgentExecutionController.addNewExecution",
+      """
+        function() {
+          return _wA({method:"POST", url:"""" + _prefix + { _defaultPrefix } + """" + "api/master/execute"})
         }
       """
     )

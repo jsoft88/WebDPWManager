@@ -7,8 +7,36 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <script
+    src="https://code.jquery.com/jquery-3.2.1.min.js"
+    integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+    crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 </head>
 <body>
-  <app-root></app-root>
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-xs-12">
+        <app-notification></app-notification>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xs-12">
+        <ul class="nav nav-tabs" role="tablist">
+          <li role="presentation" class="active"><a href="#" aria-controls="home" role="tab" data-toggle="tab">Home</a></li>
+          <li role="presentation"><a href="#" aria-controls="hosts" role="tab" data-toggle="tab">Hosts</a> </li>
+          <li role="presentation">
+            <a class="dropdown-toggle" href="#" aria-controls="deploy" role="tab" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Deploy <span class="caret"></span></a>
+            <ul class="dropdown-menu">
+              <li><a href="#">New Role</a></li>
+              <li><a href="#">New Master</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <app-root></app-root>
+  </div>
 </body>
 </html>

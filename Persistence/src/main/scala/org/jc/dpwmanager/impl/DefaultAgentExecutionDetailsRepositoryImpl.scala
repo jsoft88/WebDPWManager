@@ -26,5 +26,5 @@ class DefaultAgentExecutionDetailsRepositoryImpl(implicit ec: ExecutionContext) 
 
   override def get(id: Int) = db.run(agentExecutionDetailsTable.filter(_.executionDetailId === id).result headOption)
 
-  override def getSingleExecutionDetails(agentExecId: Int) = db.run(agentExecutionDetailsTable.filter(_.agentExecId === agentExecId).result head)
+  override def getExecutionDetails(agentExecId: Int) = db.run(agentExecutionDetailsTable.filter(_.agentExecId === agentExecId).result)
 }

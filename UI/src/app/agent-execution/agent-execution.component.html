@@ -6,7 +6,7 @@
           <th>Execution ID</th>
           <th>Master Type</th>
           <th>Command</th>
-          <th>Agent ID</th>
+          <th>Deploy ID</th>
           <th>Host</th>
           <th>Status</th>
           <th>Timestamp</th>
@@ -14,16 +14,16 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let agentExecution of agentExecutions" *ngIf="errorMessage === ''">
+        <tr *ngFor="let agentExecution of agentExecutions" [hidden]="errorMessage === ''">
           <td><a [routerLink]="['/execs/details', agentExecution.agentExecId]">{{agentExecution.agentExecId}}</a></td>
           <td>{{agentExecution.masterType.masterLabel}}</td>
           <td>{{agentExecution.command}}</td>
-          <td>{{agentExecution.agentId}}</td>
+          <td>{{agentExecution.deployId}}</td>
           <td *ngIf="agentExecution.cleanStop === false">Stopped</td>
           <td *ngIf="agentExecution.cleanStop === true">Running</td>
           <td><button class="btn btn-success" (click)="clickAgentExecutionDetails(agentExecution)">View Details</button></td>
         </tr>
-        <tr *ngIf="errorMessage">
+        <tr *ngIf="errorMessage" [hidden]="errorMessage !== ''">
           <td colspan="7">
             {{errorMessage}}
           </td>

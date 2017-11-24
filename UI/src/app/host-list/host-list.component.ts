@@ -12,7 +12,7 @@ import {Router} from '@angular/router';
 
 @Component({
   selector: 'app-host-list',
-  template: './host-list.component.html',
+  templateUrl: './host-list.component.html',
   styleUrls: ['./host-list.component.css']
 })
 export class HostListComponent implements OnInit {
@@ -52,7 +52,12 @@ export class HostListComponent implements OnInit {
       hl => {
         this.retrieveDeployments(hl);
       },
-      e => this.errorMessage = e,
+      e => {
+        this.errorMessage = e;
+        if (e.type === this.constants.ERROR_LACK_OF_ROLE) {
+          setTimeout(() => this.router.navigateByUrl(`/initial`), 2000);
+        }
+      },
       () => this.isLoading = false
     );
   }
@@ -92,7 +97,7 @@ export class HostListComponent implements OnInit {
                     masterErr.masterTypeId = 0;
                     masterErr.masterLabel = 'Not found';
 
-                    exec.masterType = masterErr
+                    exec.masterType = masterErr;
                   }
                 )
               )

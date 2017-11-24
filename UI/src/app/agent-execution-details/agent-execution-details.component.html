@@ -5,35 +5,36 @@
       <p>Here you can find de details of the current Master being executed by this agent. If you wish to modify any of
       its field, click on the edit button below. However, keep in mind that altering the params of execution, will only
       become effective after relaunching the whole master cluster.</p>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Field ID</th>
+            <th>Field</th>
+            <th>Current Value</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody *ngIf="executionDetailsRetrieveError === ''">
+          <tr *ngFor="let detail of executionDetails" [hidden]="!detail.field.fieldEnabled">
+            <td *ngIf="errorField !== detail.field">{{detail.field.fieldId}}</td>
+            <td *ngIf="errorField !== detail.field">{{detail.field.fieldName}}</td>
+            <td *ngIf="errorField === detail.field">{{errorField.fieldName}}</td>
+            <td *ngIf="!editing && errorField !== detail.field">{{detail.value}}</td>
+            <td *ngIf="editing && errorField !== detail.field"><input type="text" [(ngModel)]="detail.value"></td>
+            <td *ngIf="errorField === detail.field">--</td>
+            <td *ngIf="errorField !== detail.field">{{detail.field.fieldDescription}}</td>
+            <td *ngIf="errorField === detail.field">{{errorField.fieldDescription}}</td>
+          </tr>
+        </tbody>
+        <tbody *ngIf="executionDetailsRetrieveError">
+          <tr>
+            <td colspan="4">{{executionDetailsRetrieveError}}</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Field ID</th>
-          <th>Field</th>
-          <th>Current Value</th>
-          <th>Description</th>
-        </tr>
-      </thead>
-      <tbody *ngFor="let field of executionDetails" *ngIf="executionDetailsRetrieveError === ''">
-        <tr *ngIf="field.field.fieldEnabled">
-          <td>{{field.field.fieldId}}</td>
-          <td *ngIf="errorField === ''">{{field.field.fieldName}}</td>
-          <td *ngIf="errorField">{{errorField}}</td>
-          <td *ngIf="!editing">{{field.value}}</td>
-          <td *ngIf="editing"><input type="text" [(ngModel)]="field.value"></td>
-          <td *ngIf="errorField === ''">{{field.field.fieldDescription}}</td>
-          <td *ngIf="errorField">{{errorField}}</td>
-        </tr>
-      </tbody>
-      <tbody *ngIf="executionDetailsRetrieveError">
-        <tr>
-          <td colspan="4">{{executionDetailsRetrieveError}}</td>
-        </tr>
-      </tbody>
-    b
     <div class="panel-footer">
-      <button class="btn btn-warning" *ngIf="!editing" (click)="">Edit Execution</button>
+      <button class="btn btn-warning" *ngIf="!editing">Edit Execution</button>
       <button class="btn btn-success" *ngIf="editing" (click)="onDeployClick()">Deploy Master</button>
       <button class="btn btn-warning" *ngIf="editing" (click)="onDeployCancel()">Cancel</button>
     </div>

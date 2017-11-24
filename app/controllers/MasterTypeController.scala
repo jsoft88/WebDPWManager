@@ -1,7 +1,8 @@
 package controllers
 
-import javax.inject.{Inject, Singleton}
+import javax.inject.{Inject, Named, Singleton}
 
+import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
 import initialization.InitialConfiguration
@@ -9,15 +10,19 @@ import org.jc.dpwmanager.commands._
 import org.jc.dpwmanager.impl.{DefaultMasterFieldRepositoryImpl, DefaultMasterTypeHasFieldsRepositoryImpl, DefaultMasterTypeImpl}
 import org.jc.dpwmanager.models.{MasterField, MasterType, MasterTypeHasFields}
 import play.api.libs.json.{JsPath, Json, Writes}
+
 import scala.concurrent.duration._
 import play.api.mvc.{AbstractController, ControllerComponents}
+
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.libs.functional.syntax._
 
 @Singleton
-class MasterTypeController @Inject()(cc: ControllerComponents)(implicit ec: ExecutionContext) extends AbstractController(cc) {
+class MasterTypeController @Inject()(@Named("businessActor") businessActor: ActorRef, cc: ControllerComponents)(implicit ec: ExecutionContext) extends AbstractController(cc) {
 
   private def noBusinessActor = "No business actor found to fulfill this request"
+
+  InitialConfiguration.businessActor_(Some(businessActor))
 
   implicit val timeout = Timeout(15 seconds)
 
@@ -45,8 +50,8 @@ class MasterTypeController @Inject()(cc: ControllerComponents)(implicit ec: Exec
     }
   }
 
-  def getMasterType(masterTypeId: Short) = Action.async { implicit request =>
-    val dummyMasterType = MasterType(label = "", masterTypeId = masterTypeId)
+  def getMasterType(masterTypeId: Int) = Action.async { implicit request =>
+    val dummyMasterType = MasterType(label = "", masterTypeId = masterTypeId.toShort)
 
     InitialConfiguration.businessActor match {
       case Some(ar) => {
@@ -57,8 +62,8 @@ class MasterTypeController @Inject()(cc: ControllerComponents)(implicit ec: Exec
     }
   }
 
-  def getFieldsForMaster(masterTypeId: Short) = Action.async { implicit request =>
-    val dummyEntity = MasterTypeHasFields(masterTypeId = masterTypeId, fieldId = 0, fieldEnabled = false, ordering = 0, masterTypeHasFieldsId = 0)
+  def getFieldsForMaster(masterTypeId: Int) = Action.async { implicit request =>
+    val dummyEntity = MasterTypeHasFields(masterTypeId = masterTypeId.toShort, fieldId = 0, fieldEnabled = false, ordering = 0, masterTypeHasFieldsId = 0)
 
     InitialConfiguration.businessActor match {
       case Some(ar) => {
@@ -75,7 +80,7 @@ class MasterTypeController @Inject()(cc: ControllerComponents)(implicit ec: Exec
     InitialConfiguration.businessActor match {
       case Some(ar) => {
         (ar ? CommandWrapper(SingleFieldRetrieveCommand(new DefaultMasterFieldRepositoryImpl(), dummyEntity))).mapTo[SingleFieldRetrieveResponse]
-          .map(s => Ok(Json.toJson(s.response))) recover { case ex => InternalServerError(ex.getMessage) }
+          .map(s => Ok(Json.toJson(MasterFieldUIModel(fieldId = s.response._1.fieldId, fieldDescription = s.response._1.fieldDescription, fieldName = s.response._1.fieldName, fieldEnabled = s.response._2)))) recover { case ex => InternalServerError(ex.getMessage) }
       }
       case None => Future.successful(InternalServerError(noBusinessActor))
     }

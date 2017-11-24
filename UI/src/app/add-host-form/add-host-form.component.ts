@@ -6,7 +6,7 @@ import {HostService} from '../host.service';
 
 @Component({
   selector: 'app-add-host-form',
-  template: './add-host-form.component.html',
+  templateUrl: './add-host-form.component.html',
   styles: []
 })
 export class AddHostFormComponent implements OnInit {

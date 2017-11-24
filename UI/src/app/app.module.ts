@@ -14,6 +14,13 @@ import { AddDeploymentFormComponent } from './add-deployment-form/add-deployment
 import { DeploymentByRoleComponent } from './deployment-by-role/deployment-by-role.component';
 import { NotificationComponent } from './notification/notification.component';
 import { AddAgentExecutionComponent } from './add-agent-execution/add-agent-execution.component';
+import {ConstantService} from './constant-service.service';
+import {AgentExecutionDetailsService} from './agent-execution-details.service';
+import {DeploymentByRoleService} from './deployment-by-role-service.service';
+import {DpwRolesService} from './dpwroles-service.service';
+import {HostService} from './host.service';
+import {MasterService} from './master.service';
+import { RequiredDeploymentsComponent } from './required-deployments/required-deployments.component';
 
 @NgModule({
   declarations: [
@@ -26,7 +33,8 @@ import { AddAgentExecutionComponent } from './add-agent-execution/add-agent-exec
     AddDeploymentFormComponent,
     DeploymentByRoleComponent,
     NotificationComponent,
-    AddAgentExecutionComponent
+    AddAgentExecutionComponent,
+    RequiredDeploymentsComponent
   ],
   imports: [
     BrowserModule,
@@ -34,7 +42,15 @@ import { AddAgentExecutionComponent } from './add-agent-execution/add-agent-exec
     AppRoutingModule,
     HttpModule,
   ],
-  providers: [AgentExecutionService],
+  providers: [
+    AgentExecutionService,
+    ConstantService,
+    AgentExecutionDetailsService,
+    DeploymentByRoleService,
+    DpwRolesService,
+    HostService,
+    MasterService
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

@@ -3,7 +3,7 @@ package actors
 import akka.actor.{Actor, ActorRef, Address, Deploy, Props, RootActorPath, Status, Terminated}
 import akka.cluster.ClusterEvent.CurrentClusterState
 import akka.util.Timeout
-import utils.{BusinessMessage, BusinessRegisterFlowActor, ReachPersistenceAgentWith}
+import utils._
 import akka.pattern.ask
 import akka.remote.RemoteScope
 import com.google.inject.Inject
@@ -98,16 +98,25 @@ class BusinessActor @Inject() (configuration: Configuration) extends Actor {
 
       saIndex = (saIndex + 1) % serverActors.length
 
-      serverActors(saIndex) ? StartRoleInHost(deployWrapper)
+      (serverActors(saIndex) ? StartRoleInHost(deployWrapper)).onComplete {
+        case Success(_) => sender ! _
+        case Failure(ex) => sender ! Status.Failure(ex)
+      }
     }
 
-    case ReachPersistenceAgentWith(command) if (persistenceActors.nonEmpty) => (persistenceActors((paIndex + 1) % persistenceActors.length) ? command)
+    case ReachPersistenceAgentWith(command) if (persistenceActors.nonEmpty) => (persistenceActors((paIndex + 1) % persistenceActors.length) ? command).onComplete {
+      case Success(_) => sender ! _
+      case Failure(ex) => sender ! Status.Failure(ex)
+    }
 
-    case StartRoleFailed(reason, role) if (role.equals(BusinessRole.toString)) =>
+    case ReachPersistenceAgentWith(_) => sender ! Status.Failure(new LackOfRoleException(LackOfRolesConstants.NO_PERSISTENCE, "No persistence roles were deployed. Add at least one"))
 
-    case DeployMasterStart(_) if serverActors.isEmpty => self ! DeployMasterFailed("No servers enabled to handle master deploy request")
+    case DeployMasterStart(_) if serverActors.isEmpty => self ! Status.Failure(new Exception("No servers enabled to handle master deploy request"))
 
-    case DeployMasterStart(messageWrapper) => serverActors((saIndex + 1) % serverActors.length) ? DeployMasterStart(messageWrapper)
+    case DeployMasterStart(messageWrapper) => (serverActors((saIndex + 1) % serverActors.length) ? DeployMasterStart(messageWrapper)).onComplete {
+      case Success(_) => sender ! _
+      case Failure(ex) => sender ! Status.Failure(ex)
+    }
 
     case state: CurrentClusterState => {
       for (m <- state.members) {

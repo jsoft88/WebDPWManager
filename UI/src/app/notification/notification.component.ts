@@ -5,7 +5,7 @@ import {Http} from '@angular/http';
 
 @Component({
   selector: 'app-notification',
-  template: './notification.component.html',
+  templateUrl: './notification.component.html',
   styles: []
 })
 export class NotificationComponent implements OnInit, OnDestroy {
@@ -17,18 +17,19 @@ export class NotificationComponent implements OnInit, OnDestroy {
   constructor(private constantService: ConstantService, private http: Http) { }
 
   ngOnInit() {
-    this.sub = new Observable(observer => {
+    /*this.sub = new Observable(observer => {
       this.http.get(`${ this.constantService.API_ENDPOINT }`, this.getHeaders())
         .map(response => response.json().message)
         .subscribe(
           message => this.message = message
         )
-    });
+    });*/
   }
 
   private getHeaders(): Headers {
     const headers = new Headers();
     headers.append('Accept', 'application/json');
+    headers.append('Content-Type', 'application/json');
 
     return headers;
   }

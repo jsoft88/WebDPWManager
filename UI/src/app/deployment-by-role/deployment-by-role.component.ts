@@ -6,7 +6,7 @@ import {HostService} from '../host.service';
 
 @Component({
   selector: 'app-deployment-by-role',
-  template: './deployment-by-role.component.html',
+  templateUrl: './deployment-by-role.component.html',
   styles: []
 })
 export class DeploymentByRoleComponent implements OnInit {

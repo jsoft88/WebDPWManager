@@ -2,7 +2,7 @@
   <div class="btn-group btn-group-justified" *ngFor="let role of availableRoles">
     <div class="btn-group" role="group">
       <button type="button" [ngClass]="{'btn btn-default': true, active: role.roleLabel === selectedRole.roleLabel}" (click)="onRoleSelected(role)">{{role.roleLabel}}</button>
-      <div class="alert alert-danger" role="alert" [hidden]="selectedRole.roleLabel !== ''">Choose a DPW role for this host.</div>
+      <div class="alert alert-danger" role="alert" [hidden]="parentDeploymentByRole.role.roleLabel !== ''">Choose a DPW role for this host.</div>
     </div>
   </div>
 </div>
