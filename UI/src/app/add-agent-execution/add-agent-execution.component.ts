@@ -51,7 +51,10 @@ export class AddAgentExecutionComponent implements OnInit, OnDestroy {
     private deploymentByRoleService: DeploymentByRoleService,
     private masterService: MasterService,
     private hostService: HostService,
-    private route: ActivatedRoute) { }
+    private route: ActivatedRoute) {
+    this.deploymentByRole = new DeploymentsByRoles();
+    this.agentExecution = new AgentExecution();
+  }
 
   ngOnDestroy(): void {
     this.sub.unsubscribe();

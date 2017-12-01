@@ -25,13 +25,13 @@ import scala.util.{Failure, Success}
   */
 
 @Singleton
-class AgentExecutionController @Inject()(@Named("businessActor") businessActor: ActorRef, cc: ControllerComponents)(implicit ec: ExecutionContext) extends AbstractController(cc) {
+class AgentExecutionController @Inject()(@Named("businessActor") businessActor: ActorRef, cc: ControllerComponents)(implicit ec: ExecutionContext) extends AbstractController(cc) with ReadsAndWrites {
 
   implicit val timeout = Timeout(15 seconds)
 
   InitialConfiguration.businessActor_(Some(businessActor))
 
-  implicit val masterFieldWrites: Writes[MasterFieldUIModel] = ReadsAndWrites.masterFieldWrites
+  /*implicit val masterFieldWrites: Writes[MasterFieldUIModel] = ReadsAndWrites.masterFieldWrites
 
   implicit val agentExecutionDetailsWrites: Writes[AgentExecutionDetailsUIModel] = ReadsAndWrites.agentExecutionDetailsWrites
 
@@ -41,7 +41,7 @@ class AgentExecutionController @Inject()(@Named("businessActor") businessActor: 
 
   implicit val agentExecutionWrites: Writes[AgentExecutionUIModel] = ReadsAndWrites.agentExecutionWrites
 
-  implicit val agentExecutionReads: Reads[AgentExecutionUIModel] = ReadsAndWrites.agentExecutionReads
+  implicit val agentExecutionReads: Reads[AgentExecutionUIModel] = ReadsAndWrites.agentExecutionReads*/
 
   implicit val addExecutionResponseWrites: Writes[AddExecutionResponse] = (
     (JsPath \ "agentExecution").write[AgentExecutionUIModel] and
@@ -64,7 +64,7 @@ class AgentExecutionController @Inject()(@Named("businessActor") businessActor: 
               masterType = MasterTypeUIModel(masterTypeId = ae.masterTypeId, masterLabel = ""),
               executionTimestamp = ae.executionTimestamp,
               cleanStop = ae.cleanStop,
-              agentExecutionDetails = IndexedSeq.empty)
+              agentExecutionDetails = IndexedSeq.empty, deployId = ae.deployId)
           ))
         )) recover {
           case ex: Exception => InternalServerError("An error occurred while retrieving executions from agent: " + ex.getMessage)
@@ -104,7 +104,7 @@ class AgentExecutionController @Inject()(@Named("businessActor") businessActor: 
             componentId = 0),
           masterType = MasterTypeUIModel(masterTypeId = 0, masterLabel = ""),
           cleanStop = false,
-          agentExecutionDetails = Seq.empty[AgentExecutionDetailsUIModel])
+          agentExecutionDetails = Seq.empty[AgentExecutionDetailsUIModel], deployId = 0)
 
         Future.successful(
           InternalServerError(
@@ -130,6 +130,6 @@ class AgentExecutionController @Inject()(@Named("businessActor") businessActor: 
 
 case class AddExecutionResponse(agentExecution: AgentExecutionUIModel, errors: Seq[String])
 
-case class AgentExecutionUIModel(agentExecId: Int, command: String, deployment: DeploymentByRoleUIModel, masterType: MasterTypeUIModel, executionTimestamp: Long, cleanStop: Boolean, agentExecutionDetails: Seq[AgentExecutionDetailsUIModel])
+case class AgentExecutionUIModel(agentExecId: Int, command: String, deployment: DeploymentByRoleUIModel, masterType: MasterTypeUIModel, executionTimestamp: Long, cleanStop: Boolean, agentExecutionDetails: Seq[AgentExecutionDetailsUIModel], deployId: Int)
 
 case class AgentExecutionDetailsUIModel(field: MasterFieldUIModel, value: String)

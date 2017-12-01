@@ -25,6 +25,7 @@ export class AddHostFormComponent implements OnInit {
     this.selectedRole = new DpwRoles();
     this.selectedRole.roleId = '';
     this.selectedRole.roleLabel = '';
+    this.deployment = new DeploymentsByRoles();
   }
 
   ngOnInit() {

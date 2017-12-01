@@ -11,6 +11,8 @@ export class ConstantService {
 
   public ERROR_OTHER = 'other';
 
+  public TRIGGER_FIELD_VERIFICATION = 'field_verif';
+
   constructor() {
     this.API_ENDPOINT = 'http://localhost:9000/api';
     this.LACK_OF_ROLE_ERROR_RANGE = new Array();

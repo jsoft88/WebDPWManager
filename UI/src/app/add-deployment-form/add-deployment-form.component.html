@@ -8,23 +8,26 @@
 </div>
 <div class="form-group">
   <label for="hostPort">Host Port</label>
-  <input type="text" class="form-control" id="hostPort" placeholder="Enter port for akka actor" (change)="onDeploymentChange()" [(ngModel)]="parentDeploymentByRole.port" #port="ngModel" required>
+  <input type="number" class="form-control" id="hostPort" placeholder="Enter port for akka actor" (change)="onDeploymentChange()" [(ngModel)]="parentDeploymentByRole.port" #port="ngModel" required>
   <div class="alert alert-danger" role="alert" [hidden]="port.pristine || port.valid">Please provide a value for akka actor port.</div>
+  <div class="alert alert-danger" role="alert" [hidden]="!parentEvent && !emptyHostPortError">{{emptyHostPortError}}</div>
 </div>
 <div class="form-group">
   <label for="actorName">Actor Name</label>
   <input type="text" class="form-control" id="actorName" placeholder="Name for akka actor" (change)="onDeploymentChange()" [(ngModel)]="parentDeploymentByRole.actorName" required #actorName="ngModel">
   <div class="alert alert-danger" role="alert" [hidden]="actorName.valid || actorName.pristine">Please enter a name for this actor.</div>
+  <div class="alert alert-danger" role="alert" [hidden]="!parentEvent && !emptyActorNameError">{{emptyActorNameError}}</div>
 </div>
-<div class="form-group" *ngIf="!addingActorSystem">
+<div class="form-group" *ngIf="addingActorSystem && addingActorSystem === false">
   <label for="actorSystemName">Choose Actor System</label>
   <select id="actorSystemName" (change)="onActorSystemSelected($event.value)">
     <option [value]="-1" selected>Choose Actor System</option>
     <option *ngFor="let actorSystem of actorSystems" [value]="actorSystem">{{ actorSystem }}</option>
   </select>
 </div>
-<div class="form-group" *ngIf="addingActorSystem || parentDeploymentByRole.actorSystemName === '-1'">
+<div class="form-group" *ngIf="addingActorSystem && (addingActorSystem === true || parentDeploymentByRole.actorSystemName === '-1')">
   <label for="newActorSystemName">Add Actor System</label>
   <input type="text" class="form-control" id="newActorSystemName" placeholder="Actor System Name for actor" (change)="onDeploymentChange()" [(ngModel)]="parentDeploymentByRole.actorSystemName" required #actorSystemName="ngModel">
-  <div class="alert alert-danger" role="alert" [hidden]="actorSystemName.valid || actorName.pristine || !addingActorSystem">Please enter the parent actor system name of this actor.</div>
+  <div class="alert alert-danger" role="alert" [hidden]="actorSystemName.valid || actorName.pristine || !addingActorSystem || !emptyActorSystemNameError">Please enter the parent actor system name of this actor.</div>
+  <div class="alert alert-danger" role="alert" [hidden]="!parentEvent && !emptyActorSystemNameError">{{emptyActorSystemNameError}}</div>
 </div>

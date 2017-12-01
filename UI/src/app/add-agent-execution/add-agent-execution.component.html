@@ -7,7 +7,7 @@
       </div>
       <div class="modal-body">
         <div class="alert alert-danger" role="alert" [hidden]="addHostError === ''">{{addHostError}}</div>
-        <app-add-host-form [(showMoreOptions)]="false" [(hostEmitter)]="onNewHostAdd(response)"></app-add-host-form>
+        <app-add-host-form (showMoreOptions)="false" [hostEmitter]="onNewHostAdd(response)"></app-add-host-form>
       </div>
     </div>
   </div>
@@ -21,7 +21,7 @@
         <h4 class="modal-title">Deploy New Role</h4>
       </div>
       <div class="modal-body">
-        <app-add-deployment-form [(parentDeploymentByRole)]="deploymentByRole"></app-add-deployment-form>
+        <app-add-deployment-form (parentDeploymentByRole)="deploymentByRole"></app-add-deployment-form>
       </div>
       <div class="modal-footer">
         <button class="btn btn-default" (click)="onDeploymentAdd()">Deploy Role</button>
@@ -63,7 +63,7 @@
         <input type="text" id="command" [()]>
       </div>
       <div class="form-group">
-        <app-agent-execution-details [(editing)]="true" [(masterTypeId)]="masterTypeId" [(agentExecution)]="agentExecution" [(executionDetailsSubmitEmitter)]="onExecutionDetailsSaved(response)"></app-agent-execution-details>
+        <app-agent-execution-details (editing)="true" (masterTypeId)="masterTypeId" (agentExecution)="agentExecution" [(executionDetailsSubmitEmitter)]="onExecutionDetailsSaved(response)"></app-agent-execution-details>
       </div>
     </form>
   </div>

@@ -18,7 +18,7 @@ export class HostService extends BaseService {
   getAll(): Observable<Host[]> {
     const hosts =
       this.http
-        .get(`${this.constantsService.API_ENDPOINT}/hosts/all`, { headers: this.getHeaders() })
+        .get(`${this.constantsService.API_ENDPOINT}/hosts`, { headers: this.getHeaders() })
         .map(mapHosts)
         .catch((errResponse: Response) => {
           if (this.analyzeIfResponseIsLackOfRole(errResponse.json(), this.constantsService.LACK_OF_ROLE_ERROR_RANGE)) {
@@ -66,7 +66,7 @@ export class HostService extends BaseService {
   addHost(host: Host): Observable<Host> {
     const hostResponse =
       this.http
-        .post(`${this.constantsService.API_ENDPOINT}/hosts/add`, JSON.stringify(host), this.getHeaders())
+        .post(`${this.constantsService.API_ENDPOINT}/hosts/add`, host, this.getHeaders())
         .map(data => {
           if (data.json().error) {
             Observable.throw(data.json().message);

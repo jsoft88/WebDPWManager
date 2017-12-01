@@ -27,7 +27,7 @@ export class DeploymentByRoleService {
   addDeployment(host: Host): Observable<Host> {
     const savedDeployment =
       this.http
-        .post(`${this.constantsService.API_ENDPOINT}/hosts/deployments/add`, JSON.stringify(host), this.getHeaders())
+        .post(`${this.constantsService.API_ENDPOINT}/hosts/deployments/add`, host, this.getHeaders())
         .map(response => {
           host.deployments.push(toDeploymentsByRoles(response.json().host.deployments))
         })

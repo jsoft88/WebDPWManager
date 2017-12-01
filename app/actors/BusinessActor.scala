@@ -118,6 +118,8 @@ class BusinessActor @Inject() (configuration: Configuration) extends Actor {
       case Failure(ex) => sender ! Status.Failure(ex)
     }
 
+    case QueryOnePersistenceRoleAtLeast => persistenceActors.headOption match { case Some(_) => sender ! _ case None => sender ! Status.Failure(new LackOfRoleException(errorCode = LackOfRolesConstants.NO_BUSINESS, message = "There are no persistence agents available"))}
+
     case state: CurrentClusterState => {
       for (m <- state.members) {
         if (m.status == akka.cluster.MemberStatus.exiting && m.hasRole(ServerRole.toString)) {

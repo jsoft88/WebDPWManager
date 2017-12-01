@@ -32,7 +32,7 @@ class WebSocketActor(out: ActorRef) extends Actor {
 }
 
 @Singleton
-class HostController @Inject()(@Named("businessActor") businessActor: ActorRef, cc: ControllerComponents)(implicit system: ActorSystem, mat: Materializer) extends AbstractController(cc){
+class HostController @Inject()(@Named("businessActor") businessActor: ActorRef, cc: ControllerComponents)(implicit system: ActorSystem, mat: Materializer) extends AbstractController(cc) with ReadsAndWrites {
 
   implicit val timeout = Timeout(15 seconds)
 
@@ -40,13 +40,15 @@ class HostController @Inject()(@Named("businessActor") businessActor: ActorRef, 
 
   implicit val ec:ExecutionContext = system.dispatcher
 
-  implicit val masterTypeReads: Reads[MasterTypeUIModel] = ReadsAndWrites.masterTypeReads
-
-  implicit val masterFieldReads: Reads[MasterFieldUIModel] = ReadsAndWrites.masterFieldReads
+/*  implicit val masterFieldReads: Reads[MasterFieldUIModel] = ReadsAndWrites.masterFieldReads
 
   implicit val executionDetailsReads: Reads[AgentExecutionDetailsUIModel] = ReadsAndWrites.executionDetailsReads
 
+  implicit val dpwRolesReads: Reads[DpwRolesUIModel] = ReadsAndWrites.dpwRolesReads
+
   implicit val deploymentByRoleReads: Reads[DeploymentByRoleUIModel] = ReadsAndWrites.deploymentByRoleReads
+
+  implicit val masterTypeReads: Reads[MasterTypeUIModel] = ReadsAndWrites.masterTypeReads
 
   implicit val agentExecutionReads: Reads[AgentExecutionUIModel] = ReadsAndWrites.agentExecutionReads
 
@@ -60,7 +62,7 @@ class HostController @Inject()(@Named("businessActor") businessActor: ActorRef, 
 
   implicit val lackResponseReads: Reads[LackOfRolesResponse] = ReadsAndWrites.lackOfRolesReads
 
-  implicit val lackResponseWrites: Writes[LackOfRolesResponse] = ReadsAndWrites.lackOfRolesWrites
+  implicit val lackResponseWrites: Writes[LackOfRolesResponse] = ReadsAndWrites.lackOfRolesWrites*/
 
   implicit val addFormWrites: Writes[AddHostResponse] = (
     (JsPath \ "host").write[HostUIModel] and
@@ -110,7 +112,7 @@ class HostController @Inject()(@Named("businessActor") businessActor: ActorRef, 
 
     InitialConfiguration.businessActor match {
       case Some(ar) => (ar ? ReachPersistenceAgentWith(CommandWrapper(HostListRetrieveCommand(new DefaultHostRepositoryImpl(), dummyHost)))).mapTo[HostListRetrieveResponse]
-        .map(s => Ok(Json.toJson(s.response.map(h => HostUIModel(hostId = h.hostId, address = h.address, deployments = IndexedSeq.empty, executions = IndexedSeq.empty))))) recover {
+        .map(s => Ok(Json.toJson(s.response.map(h => HostUIModel(hostId = h.hostId, address = h.address, deployments = List.empty, executions = List.empty))))) recover {
         case ex:LackOfRoleException => InternalServerError(Json.toJson(LackOfRolesResponse(errorCode = ex.getErrorCode, errorDescription = ex.getMessage)))
         case ex => InternalServerError(ex.getMessage)
       }
@@ -179,7 +181,7 @@ class HostController @Inject()(@Named("businessActor") businessActor: ActorRef, 
     val hostResult = request.body.validate[HostUIModel]
     hostResult.fold(
       errors => {
-        val dummyHost = HostUIModel(hostId = 0, deployments = Seq(), address = "", executions = Seq())
+        val dummyHost = HostUIModel(hostId = 0, deployments = List.empty, address = "", executions = List.empty)
         Future.successful(InternalServerError(Json.toJson(AddHostResponse(host = dummyHost, errors = Seq(JsError.toJson(errors).toString()))).toString()))
       },
       host => {
@@ -208,7 +210,7 @@ class HostController @Inject()(@Named("businessActor") businessActor: ActorRef, 
                         address = s.response.address,
                         port = dins.response.port,
                         role = RoleTranslator.translateRole(dins.response.roleId))))
-                    Ok(Json.toJson(AddHostResponse(host = host.copy(hostId = s.response.hostId, deployments = Seq(host.deployments.head.copy(deployId = dins.response.deployId, componentId = dins.response.componentId))), errors = Seq())))
+                    Ok(Json.toJson(AddHostResponse(host = host.copy(hostId = s.response.hostId, deployments = List(host.deployments.head.copy(deployId = dins.response.deployId, componentId = dins.response.componentId))), errors = Seq())))
                   })
                   .recover {
                     case dpInsertEx => InternalServerError(Json.toJson(AddHostResponse(host = host.copy(hostId = s.response.hostId), errors = Seq(dpInsertEx.getMessage))))
@@ -227,7 +229,7 @@ class HostController @Inject()(@Named("businessActor") businessActor: ActorRef, 
 
     InitialConfiguration.businessActor match {
       case Some(r) => (r ? ReachPersistenceAgentWith(CommandWrapper(HostsPerClusterRetrieveCommand(new DefaultDeploymentByRoleRepositoryImpl(), dummyDeployment))))
-          .mapTo[HostsPerClusterRetrieveResponse].map(s => Ok(Json.toJson(s.response.map(h => HostUIModel(hostId = h.hostId, address = h.address, deployments = IndexedSeq.empty, executions = IndexedSeq.empty))))) recover {
+          .mapTo[HostsPerClusterRetrieveResponse].map(s => Ok(Json.toJson(s.response.map(h => HostUIModel(hostId = h.hostId, address = h.address, deployments = List.empty, executions = List.empty))))) recover {
         case ex:LackOfRoleException => InternalServerError(Json.toJson(LackOfRolesResponse(errorCode = ex.getErrorCode, errorDescription = ex.getMessage)))
         case ex => InternalServerError("Could not retrieve hosts in selected cluster. Error is: " + ex.getMessage)
       }
@@ -251,7 +253,7 @@ class HostController @Inject()(@Named("businessActor") businessActor: ActorRef, 
     val deploymentResult = request.body.validate[HostUIModel]
     deploymentResult.fold(
       errors => {
-        val dummyHost = HostUIModel(hostId = 0, deployments = Seq(), address = "", executions = Seq())
+        val dummyHost = HostUIModel(hostId = 0, deployments = List.empty, address = "", executions = List.empty)
         Future.successful(InternalServerError(Json.toJson(AddHostResponse(host = dummyHost, errors = Seq(JsError.toJson(errors).toString())))))
     },
       host => {
@@ -268,12 +270,12 @@ class HostController @Inject()(@Named("businessActor") businessActor: ActorRef, 
 
         InitialConfiguration.businessActor match {
           case Some(ar) => (ar ? ReachPersistenceAgentWith(CommandWrapper(DeploymentInsertCommand(new DefaultDeploymentByRoleRepositoryImpl(), deploymentToAdd))))
-              .mapTo[DeploymentInsertResponse].map(s => Ok(Json.toJson(AddHostResponse(host.copy(deployments = Seq(host.deployments.head.copy(deployId = s.response.deployId, componentId = s.response.componentId))), Seq()))))
+              .mapTo[DeploymentInsertResponse].map(s => Ok(Json.toJson(AddHostResponse(host.copy(deployments = List(host.deployments.head.copy(deployId = s.response.deployId, componentId = s.response.componentId))), Seq()))))
               .recover {
                 case ex: LackOfRoleException => {
                   if (RoleTranslator.translateRole(deploymentToAdd.roleId).equals(PersistenceRole.toString)) {
                     ar ! StartRoleInHost(DeployRoleWrapper(actorName = deploymentToAdd.actorName, actorSystemName = deploymentToAdd.actorSystemName, address = host.address, port = deploymentToAdd.port, role = PersistenceRole))
-                    Ok(Json.toJson(AddHostResponse(host.copy(deployments = Seq(host.deployments.head.copy(deployId = 0, componentId = 0))), Seq())))
+                    Ok(Json.toJson(AddHostResponse(host.copy(deployments = List(host.deployments.head.copy(deployId = 0, componentId = 0))), Seq())))
                   } else {
                     InternalServerError(Json.toJson(AddHostResponse(host = host, errors = Seq("Error while deploying role: " + ex.getMessage))))
                   }
@@ -288,7 +290,7 @@ class HostController @Inject()(@Named("businessActor") businessActor: ActorRef, 
 
 case class AddHostResponse(host: HostUIModel, errors: Seq[String])
 
-case class HostUIModel(hostId: Short, address: String, deployments: Seq[DeploymentByRoleUIModel], executions: Seq[AgentExecutionUIModel])
+case class HostUIModel(hostId: Short, address: String, deployments: List[DeploymentByRoleUIModel], executions: List[AgentExecutionUIModel])
 
 case class DpwRolesUIModel(roleId: String, roleLabel: String, roleDescription: String)
 

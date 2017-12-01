@@ -16,9 +16,10 @@ import play.api.mvc.{AbstractController, ControllerComponents}
 
 import scala.concurrent.{ExecutionContext, Future}
 import play.api.libs.functional.syntax._
+import utils.ReadsAndWrites
 
 @Singleton
-class MasterTypeController @Inject()(@Named("businessActor") businessActor: ActorRef, cc: ControllerComponents)(implicit ec: ExecutionContext) extends AbstractController(cc) {
+class MasterTypeController @Inject()(@Named("businessActor") businessActor: ActorRef, cc: ControllerComponents)(implicit ec: ExecutionContext) extends AbstractController(cc) with ReadsAndWrites {
 
   private def noBusinessActor = "No business actor found to fulfill this request"
 
@@ -26,7 +27,7 @@ class MasterTypeController @Inject()(@Named("businessActor") businessActor: Acto
 
   implicit val timeout = Timeout(15 seconds)
 
-  implicit val masterTypeUIWrites: Writes[MasterTypeUIModel] = (
+  /*implicit val masterTypeUIWrites: Writes[MasterTypeUIModel] = (
     (JsPath \ "masterTypeId").write[Short] and
       (JsPath \ "masterLabel").write[String]
   )(unlift(MasterTypeUIModel.unapply))
@@ -36,7 +37,7 @@ class MasterTypeController @Inject()(@Named("businessActor") businessActor: Acto
       (JsPath \ "fieldName").write[String] and
       (JsPath \ "fieldDescription").write[String] and
       (JsPath \ "fieldEnabled").write[Boolean]
-  )(unlift(MasterFieldUIModel.unapply))
+  )(unlift(MasterFieldUIModel.unapply))*/
 
   def getMasterTypes() = Action.async { implicit request =>
     val dummyMasterType = MasterType(label = "", masterTypeId = 0)

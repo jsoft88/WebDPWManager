@@ -32,6 +32,8 @@ final case class PersistenceActorsInformation(pathsForResolution: Map[String, Ad
 
 final case class ServerActorsInformation(pathForResolution: Map[String, Address])
 
+final object QueryOnePersistenceRoleAtLeast
+
 case object AgentRegistration
 
 case class MessagePayload[A](payload: A)

@@ -4,7 +4,7 @@
   </div>
 </div>
 
-<app-add-host-form (hostEmitter)="onAddHostFormSubmit($event)" (showMoreOptions)="true"></app-add-host-form>
+<app-add-host-form (hostEmitter)="onAddHostFormSubmit($event)" [showMoreOptions]="true"></app-add-host-form>
 
 <div class="row">
   <div class="col-sm-2"></div>
@@ -22,7 +22,7 @@
         <p>Please choose the operation you would like to perform.</p>
       </div>
       <div class="modal-footer">
-        <a [routerLink]="['/execs/details', selectedAgentExecution.agentExecId]" class="btn btn-primary" data-dismiss="modal" role="button">View Master Details</a>
+        <a *ngIf="selectedAgentExecution" [routerLink]="['/execs/details', selectedAgentExecution.agentExecId]" class="btn btn-primary" data-dismiss="modal" role="button">View Master Details</a>
         <button type="button" class="btn btn-info" data-dismiss="modal">Nothing</button>
       </div>
     </div>
@@ -65,7 +65,7 @@
     </select>
   </div>
 </div>
-<div class="row" *ngIf="errorMessage == ''">
+<div class="row" *ngIf="errorMessage && errorMessage == ''">
   <div class="col-sm-12" *ngFor="let host of hosts">
     <div class="thumbnail">
       <img src="" alt="Host {{host.address}}">

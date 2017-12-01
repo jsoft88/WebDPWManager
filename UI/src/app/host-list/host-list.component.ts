@@ -41,6 +41,7 @@ export class HostListComponent implements OnInit {
     private router: Router) {
 
     this.apiEndpoint = this.constants.API_ENDPOINT;
+    this.deploymentByRole = new DeploymentsByRoles();
     }
 
   ngOnInit() {
@@ -91,18 +92,23 @@ export class HostListComponent implements OnInit {
             execs => {
               execs.forEach( exec =>
                 this.masterService.getMasterType(exec.masterType.masterTypeId).subscribe(
-                  master => exec.masterType = master,
+                  master => {
+                    exec.masterType = master;
+                    host.executions[host.executions.findIndex(e => e.agentExecId === exec.agentExecId)] = exec;
+                  },
                   err => {
                     const masterErr = new MasterType();
                     masterErr.masterTypeId = 0;
                     masterErr.masterLabel = 'Not found';
 
                     exec.masterType = masterErr;
+                    host.executions[host.executions.findIndex(e => e.agentExecId === exec.agentExecId)] = exec;
                   }
                 )
               )
             }
           )
+          host.deployments[host.deployments.findIndex(idx => idx.deployId === d.deployId)] = dpd;
         },
         err => host.deployments.push(deploymentDetailErr)
       ));
