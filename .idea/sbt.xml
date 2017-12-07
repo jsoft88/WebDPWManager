@@ -7,6 +7,8 @@
         <option name="modules">
           <set>
             <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/Dpw" />
+            <option value="$PROJECT_DIR$/Dpw/project" />
             <option value="$PROJECT_DIR$/Interaction" />
             <option value="$PROJECT_DIR$/Interaction/project" />
             <option value="$PROJECT_DIR$/Main" />

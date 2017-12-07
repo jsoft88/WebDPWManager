@@ -8,13 +8,15 @@ scalaVersion := "2.12.2"
 
 lazy val akkaVersion = "2.5.4"
       
-lazy val `webdpwmanager` = (project in file(".")).enablePlugins(PlayScala).dependsOn(persistence, interaction).aggregate(persistence, interaction, main)
+lazy val `webdpwmanager` = (project in file(".")).enablePlugins(PlayScala).dependsOn(persistence, interaction).aggregate(persistence, interaction, main, dpw)
 
 lazy val persistence = (project in file("Persistence")).dependsOn(interaction)
 
 lazy val interaction = (project in file("Interaction"))
 
 lazy val main = (project in file("Main")).dependsOn(interaction, persistence)
+
+lazy val dpw = (project in file("Dpw")).dependsOn(interaction)
 
 resolvers += "scalaz-bintray" at "https://dl.bintray.com/scalaz/releases"
       

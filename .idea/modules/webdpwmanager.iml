@@ -28,10 +28,10 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="SBT: aopalliance:aopalliance:1.0:jar" level="project" />
+    <orderEntry type="module" module-name="WebDPWManager-persistence" exported="" />
     <orderEntry type="library" name="SBT: org.reactivestreams:reactive-streams:1.0.1:jar" level="project" />
     <orderEntry type="library" name="SBT: org.postgresql:postgresql:9.4-1206-jdbc41:jar" level="project" />
     <orderEntry type="library" name="SBT: com.typesafe.slick:slick_2.12:3.2.0:jar" level="project" />
-    <orderEntry type="module" module-name="persistence" exported="" />
     <orderEntry type="module" module-name="interaction" exported="" />
     <orderEntry type="library" name="SBT: org.agrona:agrona:0.9.5:jar" level="project" />
     <orderEntry type="library" name="SBT: io.netty:netty:3.10.6.Final:jar" level="project" />

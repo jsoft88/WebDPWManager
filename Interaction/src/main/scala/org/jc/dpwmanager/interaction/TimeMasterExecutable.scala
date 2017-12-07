@@ -5,7 +5,9 @@ package org.jc.dpwmanager.interaction
   */
 case class TimeMasterExecutable(masterTypeId: Short, masterLabel: String) extends IExecutable(masterTypeId, masterLabel) {
 
-  override protected var command: Array[String] = _
+  override protected var command: Array[String] = Array.empty
+
+  override protected var commandMap: Map[MasterFields, String] = Map.empty
 
   override def commandToString(): String = {
     if (this.command.length == 0) {
@@ -15,7 +17,9 @@ case class TimeMasterExecutable(masterTypeId: Short, masterLabel: String) extend
     }
   }
 
-  override def commandAsArray(map: Map[MasterFields, String]): Array[String] = {
+  override def commandAsMap: Map[MasterFields, String] = super.commandAsMap
+
+  override def commandMapToArray(map: Map[MasterFields, String]): Array[String] = {
     val fieldOrder: Array[MasterFields] =
       Array(
         TimeMasterFields.RunAsUser,
