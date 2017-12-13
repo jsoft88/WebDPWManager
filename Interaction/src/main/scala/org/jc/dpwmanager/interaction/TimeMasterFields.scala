@@ -29,5 +29,7 @@ object TimeMasterFields {
   case object NTPServer extends MasterFields
 
   case object KillRequestZnode extends MasterFields
+
+  case object MaxForgiveMeMillis extends MasterFields
 }
 

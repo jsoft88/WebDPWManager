@@ -9,6 +9,6 @@
         <parameter value="utf8" />
       </parameters>
     </profile>
-    <profile name="SBT 2" modules="WebDPWManager-interaction,Main-interaction,Main-main,default-4e6277,Persistence-interaction,Persistence-persistence,default-8c275f,Main-interaction~1,main,persistence,WebDPWManager-main,dpw,interaction,WebDPWManager-main,interaction,WebDPWManager-persistence" />
+    <profile name="SBT 2" modules="WebDPWManager-interaction,Main-interaction,Main-main,default-4e6277,Persistence-interaction,Persistence-persistence,default-8c275f,Main-interaction~1,main,persistence,interaction,WebDPWManager-main,dpw,interaction,WebDPWManager-main,WebDPWManager-persistence" />
   </component>
 </project>

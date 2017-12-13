@@ -32,6 +32,10 @@ final case class PersistenceActorsInformation(pathsForResolution: Map[String, Ad
 
 final case class ServerActorsInformation(pathForResolution: Map[String, Address])
 
+final case class RequestDeathOfActiveMaster(requesterId: String, actorSystemName: String)
+
+final case class TakePoisonPill(ifActive: Boolean)
+
 final object QueryOnePersistenceRoleAtLeast
 
 case object AgentRegistration
