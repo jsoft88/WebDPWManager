@@ -16,6 +16,8 @@ GET     /api/hosts/roles            controllers.HostController.getAllRoles
 
 GET     /api/hosts/role/:roleId     controllers.HostController.getRoleById(roleId: String)
 
+GET     /api/hosts/roles/executable controllers.HostController.getRolesWithExecutionPermission
+
 POST    /api/hosts/add              controllers.HostController.addHost
 
 GET     /api/hosts/deployments/details/:deployId controllers.HostController.getSingleDeploymentForRoleById(deployId: Int)
@@ -29,6 +31,8 @@ GET     /api/hosts/all              controllers.HostController.getAllHosts
 GET     /api/hosts/cluster/:actorSystemName     controllers.HostController.getAllHostsInActorSystemCluster(actorSystemName: String)
 
 GET     /api/hosts/clusters         controllers.HostController.getAllActorSystems
+
+GET     /api/hosts/clusters/
 
 GET     /api/hosts/role/deployments/:roleId controllers.HostController.getAllHostsWhereRoleDeployed(roleId: String)
 

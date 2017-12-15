@@ -24,6 +24,15 @@ export class DeploymentByRoleService {
 
   }
 
+  getActorSystems(): Observable<DeploymentsByRoles[]> {
+    return this.http
+      .get(`${this.constantsService.API_ENDPOINT}/api/hosts/clusters`, this.getHeaders())
+      .map(data => {
+        data.json().map(d => toDeploymentsByRoles(d));
+      })
+      .catch((error: Response) => Observable.throw(error.statusText));
+  }
+
   addDeployment(host: Host): Observable<Host> {
     const savedDeployment =
       this.http

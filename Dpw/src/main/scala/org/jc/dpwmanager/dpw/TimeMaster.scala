@@ -98,7 +98,10 @@ class TimeMaster extends Actor with Watcher with TimeDataListener {
       yellowPage ! TimeMasterKeepAliveReport(timeTick = currentNetworkTime, actorSystemName = context.system.name)
     }
 
-    case BeginTimeMasterLifeCycle => this.schedulerCancellable = Some(context.system.scheduler.schedule(0 milliseconds, this.executable.get.commandAsMap.get(TimeMasterFields.TimeTickInterval).get.toLong milliseconds, self, TimeMasterTimeTick))
+    case BeginTimeMasterLifeCycle =>
+      if (this.active) {
+        this.schedulerCancellable = Some(context.system.scheduler.schedule(0 milliseconds, this.executable.get.commandAsMap.get(TimeMasterFields.TimeTickInterval).get.toLong milliseconds, self, TimeMasterTimeTick))
+      }
 
     case ReadTimeTick(payload, _) => {
       if (payload - this.lastTick > this.maxReportSkipForgive) {

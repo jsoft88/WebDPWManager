@@ -47,4 +47,8 @@ class DefaultDeploymentByRoleRepositoryImpl(implicit ec: ExecutionContext) exten
   }
 
   override def getActorSystems() = db.run(deploymentsByRoles.map(_.actorSystemName).distinct.result)
+
+  override def getAllDeploymentsForRoleInActorSystem(dpwRole: DpwRoles, actorSystemName: String) = {
+    db.run(deploymentsByRoles.filter(dr => dr.roleId === dpwRole.roleId && dr.actorSystemName === actorSystemName).result)
+  }
 }

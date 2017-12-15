@@ -11,8 +11,8 @@ import akka.pattern.{AskTimeoutException, ask}
 import akka.stream.Materializer
 import akka.util.Timeout
 import org.jc.dpwmanager.commands._
-import org.jc.dpwmanager.impl.{DefaultAgentRepositoryImpl, DefaultDeploymentByRoleRepositoryImpl, DefaultDpwRolesRepositoryImpl, DefaultHostRepositoryImpl}
-import org.jc.dpwmanager.models.{Agent, DeploymentByRole, DpwRoles, Host}
+import org.jc.dpwmanager.impl._
+import org.jc.dpwmanager.models._
 import org.jc.dpwmanager.util.{DeployRoleWrapper, PersistenceRole, RoleTranslator, StartRoleInHost}
 import play.api.libs.json._
 import play.api.libs.functional.syntax._
@@ -170,6 +170,24 @@ class HostController @Inject()(@Named("businessActor") businessActor: ActorRef, 
 
       }
       case None => Future.successful(InternalServerError(Json.toJson(LackOfRolesResponse(errorCode = LackOfRolesConstants.NO_BUSINESS, errorDescription = noBusinessActor))))
+    }
+  }
+
+  def getRolesWithExecutionPermission = Action.async { implicit request =>
+    InitialConfiguration.businessActor match {
+      case Some(ar) => (ar ? ReachPersistenceAgentWith(CommandWrapper(RetrieveDpwRolesExecutableCommand(repository = new DefaultDpwRoleConstraintRepositoryImpl(), entity = DpwRoleConstraint(constraintId = 0, roleId = "", canExecute = false)))))
+          .mapTo[RetrieveDpwRolesExecutableResponse].map(s => Ok(Json.toJson(s.response.map(r => DpwRolesUIModel(roleId = r.roleId, roleDescription = r.roleDescription, roleLabel = r.roleLabel))))).recover {
+        case ex => InternalServerError(ex.getMessage)
+      }
+      case None => Future.successful(InternalServerError(Json.toJson(LackOfRolesResponse(errorCode = LackOfRolesConstants.NO_BUSINESS, errorDescription = noBusinessActor))))
+    }
+  }
+
+  def getDeploymentsForRoleInActorSystem(roleId: String, actorSystemName: String) = Action.async { implicit request =>
+    val dummyDeploymentByRole = DeploymentByRole(deployId = 0, actorName = "", actorSystemName = actorSystemName, hostId = 0, roleId = roleId, componentId = 0, port = 0)
+    InitialConfiguration.businessActor match {
+      case Some(ar) => (ar ? ReachPersistenceAgentWith(CommandWrapper(RetrieveDeploymentsForRoleBySystemCommand(new DefaultDeploymentByRoleRepositoryImpl(), dummyDeploymentByRole))))
+          .mapTo[RetrieveDeploymentsForRoleBySystemResponse].map(s => Ok(Json.toJson(s.response.map(dbr => DeploymentByRoleUIModel(deployId = dbr.deployId, actorSystemName = dbr.actorSystemName, role = DpwRolesUIModel(ro))))))
     }
   }
 

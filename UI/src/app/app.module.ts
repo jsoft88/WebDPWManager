@@ -21,6 +21,7 @@ import {DpwRolesService} from './dpwroles-service.service';
 import {HostService} from './host.service';
 import {MasterService} from './master.service';
 import { RequiredDeploymentsComponent } from './required-deployments/required-deployments.component';
+import { AddMasterClusterComponent } from './add-master-cluster/add-master-cluster.component';
 
 @NgModule({
   declarations: [
@@ -34,7 +35,8 @@ import { RequiredDeploymentsComponent } from './required-deployments/required-de
     DeploymentByRoleComponent,
     NotificationComponent,
     AddAgentExecutionComponent,
-    RequiredDeploymentsComponent
+    RequiredDeploymentsComponent,
+    AddMasterClusterComponent
   ],
   imports: [
     BrowserModule,

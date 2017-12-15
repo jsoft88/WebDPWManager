@@ -29,6 +29,11 @@ export class DpwRolesService {
     return role;
   }
 
+  getDpwRolesWithExecutionPermission(): Observable<DpwRoles[]> {
+    return this.http
+      .get(`${this.constantService.API_ENDPOINT}/hosts`)
+  }
+
   private getHeaders() {
     const headers = new Headers();
     headers.append('Accept', 'application/json');
